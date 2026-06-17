@@ -693,7 +693,8 @@ function highlightMatch(text, query) {
 }
 
 // Updated filter – now takes an optional query param
-const filterExercises = debounce(function(query) {
+function filterExercises(query) {
+  // If query not provided, read from input
   if (query === undefined || query === null) {
     const input = document.getElementById('exercise-search');
     query = input ? input.value.toLowerCase().trim() : '';
@@ -713,6 +714,7 @@ const filterExercises = debounce(function(query) {
     );
   }
 
+  // Group and render as before
   const groups = {};
   exercises.forEach(e => {
     if (!groups[e.muscle]) groups[e.muscle] = [];
@@ -744,7 +746,7 @@ const filterExercises = debounce(function(query) {
           </div>
         </div>`).join('')}
     </div>`).join('');
-}, 200);
+}
 
 // ─── Keyboard navigation for autocomplete ───
 document.addEventListener('DOMContentLoaded', function() {
@@ -2787,12 +2789,12 @@ function renderChart() {
         borderWidth: 2,
       }]
     },
-    options: {
-  animation: {
-    duration: isLowEnd() ? 0 : 500 // Disable animations on low‑end
-  },
+    options: {  
       responsive: true,
       maintainAspectRatio: false,
+      animation: {
+    duration: isLowEnd() ? 0 : 500 // Disable animations on low‑end
+  },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -2817,12 +2819,8 @@ function renderChart() {
           grid: { color: 'rgba(255,255,255,0.04)' }
         }
       }
-      
     }
   });
-
-
-  
 }
 
 // ─── Body Weight Chart ────────────────────────────────────
