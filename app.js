@@ -46,6 +46,38 @@ const DB = {
   set: (key, val) => { try { localStorage.setItem('jimbuddy_' + key, JSON.stringify(val)); } catch {} },
 };
 
+// ─── Performance Optimizations ────────────────────────────
+
+// Detect low‑end devices
+const isLowEnd = () => {
+  // Check RAM (approximate via device memory API)
+  if ('deviceMemory' in navigator && navigator.deviceMemory < 4) return true;
+  // Check CPU cores
+  if ('hardwareConcurrency' in navigator && navigator.hardwareConcurrency < 4) return true;
+  return false;
+};
+
+// Throttle wrapper – limits function calls to once per `delay` ms
+function throttle(fn, delay = 300) {
+  let lastCall = 0;
+  return function (...args) {
+    const now = Date.now();
+    if (now - lastCall >= delay) {
+      lastCall = now;
+      return fn.apply(this, args);
+    }
+  };
+}
+
+// Debounce wrapper – waits for idle before executing
+function debounce(fn, delay = 250) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
 // ─── Constants ───────────────────────────────────────────
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -601,14 +633,13 @@ function getAllExercises() {
 
 let autocompleteSelectedIndex = -1;
 
-function updateAutocomplete() {
+const updateAutocomplete = debounce(function() {
   const input = document.getElementById('exercise-search');
   const list = document.getElementById('autocomplete-list');
   const query = input.value.toLowerCase().trim();
 
   if (!query || query.length < 1) {
     list.style.display = 'none';
-    // Still show all exercises when search is empty
     filterExercises('');
     return;
   }
@@ -617,16 +648,14 @@ function updateAutocomplete() {
   const matches = allEx.filter(ex =>
     ex.name.toLowerCase().includes(query) ||
     (ex.muscle && ex.muscle.toLowerCase().includes(query))
-  ).slice(0, 10); // limit to 10 suggestions
+  ).slice(0, 8); // Reduced from 10 to 8
 
   if (matches.length === 0) {
     list.style.display = 'none';
-    // Still filter main list to show "no results"
     filterExercises(query);
     return;
   }
 
-  // Render dropdown
   list.innerHTML = matches.map((ex, idx) => `
     <div class="autocomplete-item" data-index="${idx}" data-id="${ex.id}">
       <span class="item-name">${highlightMatch(ex.name, query)}</span>
@@ -637,7 +666,6 @@ function updateAutocomplete() {
   list.style.display = 'block';
   autocompleteSelectedIndex = -1;
 
-  // Attach click listeners to each item
   list.querySelectorAll('.autocomplete-item').forEach(el => {
     el.addEventListener('click', function() {
       const id = this.dataset.id;
@@ -646,15 +674,14 @@ function updateAutocomplete() {
       if (selected) {
         input.value = selected.name;
         list.style.display = 'none';
-        filterExercises(selected.name); // filter main list to this exercise
+        filterExercises(selected.name);
         input.focus();
       }
     });
   });
 
-  // Also filter the main list as they type (showing matches live)
   filterExercises(query);
-}
+}, 180);
 
 // Helper to bold matched text
 function highlightMatch(text, query) {
@@ -666,8 +693,7 @@ function highlightMatch(text, query) {
 }
 
 // Updated filter – now takes an optional query param
-function filterExercises(query) {
-  // If query not provided, read from input
+const filterExercises = debounce(function(query) {
   if (query === undefined || query === null) {
     const input = document.getElementById('exercise-search');
     query = input ? input.value.toLowerCase().trim() : '';
@@ -687,7 +713,6 @@ function filterExercises(query) {
     );
   }
 
-  // Group and render as before
   const groups = {};
   exercises.forEach(e => {
     if (!groups[e.muscle]) groups[e.muscle] = [];
@@ -719,7 +744,7 @@ function filterExercises(query) {
           </div>
         </div>`).join('')}
     </div>`).join('');
-}
+}, 200);
 
 // ─── Keyboard navigation for autocomplete ───
 document.addEventListener('DOMContentLoaded', function() {
@@ -1992,27 +2017,37 @@ function applySplitTemplate(template) {
 
 // ─── Navigation ─────────────────────────────────────────
 function navigate(page) {
-    SoundManager.tap();
+  SoundManager.tap();
 
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  document.querySelector(`.nav-btn[data-page="${page}"]`)?.classList.add('active');
-  state.currentPage = page;
-  if (page === 'home') renderDashboard();
-  if (page === 'workouts') renderWorkouts();
-  if (page === 'progress') renderProgress();
-  if (page === 'goals') renderGoals();
-  if (page === 'water') renderWater();
-  if (page === 'schedule') renderWeeklySchedule();
-  if (page === 'calorie') renderCalorieTracker();
-  if (page === 'calculator') { 
+  // Use requestAnimationFrame to batch DOM updates
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+    const targetPage = document.getElementById('page-' + page);
+    if (targetPage) targetPage.classList.add('active');
+
+    const targetBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
+    if (targetBtn) targetBtn.classList.add('active');
+
+    state.currentPage = page;
+
+    // Lazy‑render only if needed
+    if (page === 'home') renderDashboard();
+    if (page === 'workouts') renderWorkouts();
+    if (page === 'progress') renderProgress();
+    if (page === 'goals') renderGoals();
+    if (page === 'water') renderWater();
+    if (page === 'schedule') renderWeeklySchedule();
+    if (page === 'calorie') renderCalorieTracker();
+    if (page === 'calculator') {
+      renderCalorieTracker();
+      displaySavedProfile();
+      loadSavedProfile();
+    }
     if (page === 'diet') renderDietPage();
     if (page === 'gymbros') renderGymbros();
-  renderCalorieTracker();
-  displaySavedProfile();
-  loadSavedProfile();
-}
+  });
 }
 
 // ─── Dashboard ───────────────────────────────────────────
@@ -2753,6 +2788,9 @@ function renderChart() {
       }]
     },
     options: {
+  animation: {
+    duration: isLowEnd() ? 0 : 500 // Disable animations on low‑end
+  },
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
@@ -2779,8 +2817,12 @@ function renderChart() {
           grid: { color: 'rgba(255,255,255,0.04)' }
         }
       }
+      
     }
   });
+
+
+  
 }
 
 // ─── Body Weight Chart ────────────────────────────────────
