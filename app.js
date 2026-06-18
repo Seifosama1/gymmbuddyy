@@ -627,9 +627,18 @@ function formatKg(weight) {
   return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, '');
 }
 
+let _cachedAllExercises = null;
 function getAllExercises() {
-  return [...EXERCISE_LIBRARY, ...(getData().customWorkouts || [])];
+  if (!_cachedAllExercises) {
+    _cachedAllExercises = [...EXERCISE_LIBRARY, ...(getData().customWorkouts || [])];
+  }
+  return _cachedAllExercises;
 }
+// Invalidate when custom workouts change:
+function invalidateExerciseCache() {
+  _cachedAllExercises = null;
+}
+// Call invalidateExerciseCache() after saving/deleting custom workouts.
 
 let autocompleteSelectedIndex = -1;
 
@@ -700,12 +709,91 @@ function filterExercises(query) {
     query = input ? input.value.toLowerCase().trim() : '';
   }
 
+const EXERCISES_PER_PAGE = 30;
+let currentExercisePage = 1;
+let allFilteredExercises = [];
+
+function loadMoreExercises() {
+  currentExercisePage++;
+  renderExercisePage();
+}
+
+function renderExercisePage() {
+  const start = 0;
+  const end = currentExercisePage * EXERCISES_PER_PAGE;
+  const visible = allFilteredExercises.slice(start, end);
+  const total = allFilteredExercises.length;
+  const hasMore = end < total;
+
+  const el = document.getElementById('exercise-list');
+  if (!el) return;
+
+  const groups = {};
+  visible.forEach(e => {
+    if (!groups[e.muscle]) groups[e.muscle] = [];
+    groups[e.muscle].push(e);
+  });
+
+  const { prs } = getData();
+  let html = Object.entries(groups).map(([muscle, exs]) => `
+    <div class="exercise-group">
+      <div class="exercise-group-title">${MUSCLE_EMOJIS[muscle] || ''} ${muscle}</div>
+      ${exs.map(e => `
+        <div class="exercise-card">
+          <div class="exercise-info" style="flex:1">
+            <div class="exercise-name">${escHtml(e.name)}</div>
+            <div class="exercise-meta">${e.isCardio ? 'Cardio' : `${e.sets} sets × ${e.reps} reps · ${e.rest}s rest`}</div>
+            ${prs[e.id] ? `<div class="exercise-pr">PR: ${prs[e.id].weight}kg</div>` : ''}
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); addToWorkoutQueue('${e.id}', '${escHtml(e.name)}')" style="padding:6px 12px">+ Queue</button>
+            <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); startSessionForExercise('${e.id}')" style="padding:6px 12px">▶ Start</button>
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+
+  if (hasMore) {
+    html += `<div style="text-align:center;padding:12px;">
+      <button class="btn btn-sm btn-ghost" onclick="loadMoreExercises()">Load 30 more (${total - end} remaining)</button>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// Modify filterExercises to use pagination
+const filterExercises = debounce(function(query) {
+  if (query === undefined || query === null) {
+    const input = document.getElementById('exercise-search');
+    query = input ? input.value.toLowerCase().trim() : '';
+  }
+
   const allEx = getAllExercises();
   let exercises = allEx;
 
   if (state.muscleFilter !== 'All') {
     exercises = exercises.filter(e => e.muscle === state.muscleFilter);
   }
+
+  if (query) {
+    exercises = exercises.filter(e =>
+      e.name.toLowerCase().includes(query) ||
+      (e.muscle && e.muscle.toLowerCase().includes(query))
+    );
+  }
+
+  allFilteredExercises = exercises;
+  currentExercisePage = 1;
+  renderExercisePage();
+}, 200);
+  
+  const allEx = getAllExercises();
+  let exercises = allEx;
+
+  if (state.muscleFilter !== 'All') {
+    exercises = exercises.filter(e => e.muscle === state.muscleFilter);
+  }
+
 
   if (query) {
     exercises = exercises.filter(e =>
@@ -1576,6 +1664,8 @@ function getWeeklySchedule() {
 
 function saveWeeklySchedule(schedule) {
   DB.set('weeklySchedule', schedule);
+    syncUserDataToCloud();
+
 }
 
 function renderWeeklySchedule() {
@@ -1606,6 +1696,8 @@ function renderWeeklySchedule() {
       </div>
     `;
   }).join('');
+    syncUserDataToCloud();
+
 }
 
 function editScheduleDay(day) {
@@ -1623,6 +1715,8 @@ function editScheduleDay(day) {
   renderAvailableExercises('');
   
   openModal('schedule-modal');
+    syncUserDataToCloud();
+
 }
 
 function renderScheduleWorkoutList(workouts) {
@@ -2740,6 +2834,9 @@ function renderChart() {
   if (!exId) return;
 
   const dataPoints = [];
+
+  
+
   sessions.forEach(s => {
     (s.exercises || []).forEach(e => {
       if ((e.id || e.name) === exId && !e.isCardio) {
@@ -2821,6 +2918,9 @@ function renderChart() {
       }
     }
   });
+
+
+  
 }
 
 // ─── Body Weight Chart ────────────────────────────────────
@@ -3098,7 +3198,9 @@ function saveGoal() {
   DB.set('weeklyGoals', goals);
   closeModal('goal-modal');
   toast('Goal set!');
-  renderWeeklyGoals();
+  renderWeeklyGoals();      
+  syncUserDataToCloud();
+  
 }
 
 function renderWeeklyGoals() {
@@ -3138,6 +3240,8 @@ function deleteGoal(id) {
   DB.set('weeklyGoals', getData().weeklyGoals.filter(g => g.id !== id));
   toast('Goal removed');
   renderWeeklyGoals();
+    syncUserDataToCloud();
+
 }
 
 // Weight Loss Goal
@@ -3150,6 +3254,8 @@ function saveWeightLossGoal() {
   DB.set('weightLossGoal', { currentWeight: current, targetWeight: target, targetDate: date, createdAt: new Date().toISOString() });
   toast('Weight loss goal saved!');
   renderWeightLossGoal();
+    syncUserDataToCloud();
+
 }
 
 function logWeight() {
@@ -3163,6 +3269,8 @@ function logWeight() {
   toast('Weight logged!');
   renderWeightLossGoal();
   renderDashboard();
+    syncUserDataToCloud();
+
 }
 
 function renderWeightLossGoal() {
@@ -3228,6 +3336,8 @@ function saveCardioGoal() {
   DB.set('cardioGoal', { minutesPerWeek: minutes, sessionsPerWeek: sessions, createdAt: new Date().toISOString() });
   toast('Cardio goal saved!');
   renderCardioGoals();
+    syncUserDataToCloud();
+
 }
 
 function logCardio() {
@@ -3355,6 +3465,8 @@ function addWater(ml) {
   toast(`+${ml}ml 💧`);
   renderWater();
   updateDashWater();
+    syncUserDataToCloud();
+
 }
 
 function addWaterCustom() {
@@ -3363,6 +3475,8 @@ function addWaterCustom() {
   const customInput = document.getElementById('water-custom-amount');
   if (customInput) customInput.value = '';
   addWater(val);
+    syncUserDataToCloud();
+
 }
 
 function setWaterGoal() {
@@ -3382,6 +3496,8 @@ function resetWater() {
   DB.set('waterLog', log);
   toast('Water reset');
   renderWater();
+    syncUserDataToCloud();
+
 }
 
 function updateDashWater() {
@@ -3572,6 +3688,8 @@ function saveCalculatorProfile() {
   
   displaySavedProfile();
   toast('Profile saved!');
+    syncUserDataToCloud();
+
 }
 
 function displaySavedProfile() {
@@ -3791,6 +3909,8 @@ function renderWorkoutQueue() {
       </div>
     `;
   }).join('');
+
+
 }
 
 // Open modal to log sets for a queued exercise
@@ -4508,6 +4628,14 @@ document.addEventListener('DOMContentLoaded', () => {
         ticking = true;
       }
     });
+
+const scrollContainer = document.querySelector('.page-scroll');
+if (scrollContainer) {
+  scrollContainer.addEventListener('scroll', throttle(() => {
+    // No heavy work – just let the browser breathe
+  }, 200), { passive: true });
+}
+
   }
 
   // Debounce input events

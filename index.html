@@ -483,6 +483,7 @@
                <div class="page-header">
         <h2 class="page-title">Hydration 💧</h2>
         <button class="btn btn-sm btn-ghost" onclick="openHydrationReminderModal()">⏰ Reminders</button>
+        <button class="btn btn-sm btn-ghost" onclick="sendHydrationNotification('💧 Test reminder from settings!')">🔔 Test</button>
       </div>
 
           <!-- Water Bottle Visual -->
@@ -844,7 +845,7 @@
   
 <button class="nav-btn" data-page="diet" onclick="navigate('diet')">
   <span class="nav-icon">📋</span>
-  <span class="nav-label">Diets</span>
+  <span class="nav-label">Diet</span>
 </button>
 
     </nav>
@@ -1353,10 +1354,13 @@
           <div class="form-group">
             <label class="form-label">Reminder Interval (minutes)</label>
             <select class="form-input" id="reminder-interval">
+              <option value="10">Every 10 minutes</option>
               <option value="30">Every 30 minutes</option>
               <option value="60" selected>Every hour</option>
               <option value="90">Every 90 minutes</option>
               <option value="120">Every 2 hours</option>
+              <option value="360">Every 6 hours</option>   <!-- 👈 add this line -->
+
             </select>
           </div>
           
@@ -1365,7 +1369,6 @@
             <input type="text" class="form-input" id="reminder-message" value="💧 Time to hydrate! Drink some water." />
           </div>
           
-          <button class="btn btn-primary" style="width:100%; margin-top:8px;" onclick="testHydrationReminder()">🔔 Test Reminder</button>
         </div>
         
         <div class="profile-info-note" style="margin-top: 16px;">
@@ -1373,8 +1376,10 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeModal('hydration-reminder-modal')">Cancel</button>
+        <!-- <button class="btn btn-ghost" onclick="closeModal('hydration-reminder-modal')">Cancel</button> -->
         <button class="btn btn-primary" onclick="saveHydrationReminderSettings()">Save Settings</button>
+                  <button class="btn btn-primary"  onclick="testHydrationReminder()">🔔 Test Reminder</button>
+
       </div>
     </div>
   </div>
@@ -1501,6 +1506,7 @@
           <div class="settings-row">
             <span>Set up water reminders</span>
             <button class="btn btn-sm" onclick="closeModal('settings-modal'); openHydrationReminderModal()">Configure</button>
+            
           </div>
         </div>
         
