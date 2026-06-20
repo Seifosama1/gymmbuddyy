@@ -4379,3 +4379,356 @@ body.bg-custom::before {
   animation: none !important;
   transition: none !important;
 }
+
+/* ═══════════════════ GYMBROS & CHAT STYLES ═══════════════════ */
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--danger);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  vertical-align: middle;
+  box-shadow: 0 2px 5px rgba(255, 71, 87, 0.4);
+}
+
+/* Search results & lists */
+.gymbro-search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  transition: var(--transition);
+}
+.gymbro-search-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.gymbro-search-item-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.gymbro-search-item-avatar {
+  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--card-border);
+}
+.gymbro-search-item-name {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 14px;
+}
+.gymbro-search-item-streak {
+  font-size: 11px;
+  color: var(--text2);
+  margin-top: 2px;
+}
+
+/* Friend request cards */
+.gymbro-request-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  transition: var(--transition);
+}
+.gymbro-request-card-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.gymbro-request-card-avatar {
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.gymbro-request-card-name {
+  font-weight: 700;
+  color: var(--text);
+}
+.gymbro-request-card-sub {
+  font-size: 12px;
+  color: var(--text2);
+}
+.gymbro-request-card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* Active friends list */
+.gymbro-friend-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.gymbro-friend-card:active {
+  transform: scale(0.98);
+}
+.gymbro-friend-card-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+.gymbro-friend-card-avatar-wrap {
+  position: relative;
+}
+.gymbro-friend-card-avatar {
+  font-size: 24px;
+  width: 44px;
+  height: 44px;
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--card-border);
+}
+
+/* Status dots */
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+.status-dot.online {
+  background-color: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+.status-dot.offline {
+  background-color: var(--text3);
+}
+
+/* Online indicator overlay on avatars */
+.gymbro-friend-card-status-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--bg2);
+}
+.gymbro-friend-card-status-badge.online {
+  background-color: var(--accent);
+  box-shadow: 0 0 4px var(--accent);
+}
+.gymbro-friend-card-status-badge.offline {
+  background-color: var(--text3);
+}
+
+.gymbro-friend-card-details {
+  display: flex;
+  flex-direction: column;
+}
+.gymbro-friend-card-name {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.gymbro-friend-card-stats {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 3px;
+}
+
+.gymbro-friend-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Chat Modal customization */
+.chat-modal-content {
+  max-width: 500px;
+  height: 85vh !important;
+  display: flex;
+  flex-direction: column;
+  background: rgba(17, 17, 24, 0.85) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.chat-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--card-border);
+}
+.chat-header-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.chat-header-avatar {
+  font-size: 24px;
+  width: 38px;
+  height: 38px;
+  background: var(--bg3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--card-border);
+}
+.chat-header-info h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+.chat-header-status {
+  font-size: 11px;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.chat-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.1);
+  scroll-behavior: smooth;
+}
+
+/* Chat Bubbles */
+.chat-message-row {
+  display: flex;
+  width: 100%;
+}
+.chat-message-row.sent {
+  justify-content: flex-end;
+}
+.chat-message-row.received {
+  justify-content: flex-start;
+}
+
+.message-bubble {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.4;
+  position: relative;
+  word-break: break-word;
+}
+
+.chat-message-row.sent .message-bubble {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+  color: #050508;
+  font-weight: 500;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 229, 160, 0.15);
+}
+
+.chat-message-row.received .message-bubble {
+  background: var(--bg3);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+  border: 1px solid var(--card-border);
+}
+
+.message-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  font-size: 10px;
+  margin-top: 4px;
+}
+.chat-message-row.sent .message-meta {
+  color: rgba(5, 5, 8, 0.6);
+}
+.chat-message-row.received .message-meta {
+  color: var(--text2);
+}
+
+.chat-modal-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--card-border);
+  background: var(--bg2);
+}
+
+.chat-input-wrap {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.chat-input {
+  flex: 1;
+  margin: 0 !important;
+}
+
+.chat-send-btn {
+  margin: 0 !important;
+  height: 42px;
+  padding: 0 16px !important;
+}
+
+/* Chat scroll indicator */
+.chat-messages-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  color: var(--text2);
+  gap: 10px;
+  padding: 40px 0;
+}
+.chat-messages-empty-icon {
+  font-size: 40px;
+  opacity: 0.6;
+}
+.chat-messages-empty-text {
+  font-size: 13px;
+}

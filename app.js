@@ -989,68 +989,20 @@ function saveGymbros(list) {
   DB.set('gymbros', list);
 }
 
-async function addGymbro() {
+function addGymbro() {
   const input = document.getElementById('gymbro-username-input');
-  const username = input.value.trim();
-  if (!username) { toast('Please enter a username'); return; }
-
-  // 1. Check if already in local list
-  const list = getGymbros();
-  if (list.includes(username)) {
-    toast('Already a gymbro!');
-    return;
-  }
-
-  // 2. Query Supabase to see if this username exists
-  try {
-    toast('🔍 Checking user...');
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/leaderboard?username=eq.${encodeURIComponent(username)}&select=username,user_id`,
-      {
-        headers: {
-          'apikey': SUPABASE_ANON,
-          'Authorization': `Bearer ${SUPABASE_ANON}`  // public read is fine
-        }
-      }
-    );
-
-// ─── Check if username exists in leaderboard ────────────
-
-
-    if (!res.ok) throw new Error('Network error');
-    const data = await res.json();
-
-    if (data.length === 0) {
-      toast('❌ User not found. Make sure they have a profile.');
-      return;
+  if (input) {
+    const username = input.value.trim();
+    if (username) {
+      handleAddFriend(username);
+    } else {
+      toast('Please enter a username');
     }
-
-    // 3. Prevent adding yourself
-    const user = getAuthUser();
-    if (user && user.id === data[0].user_id) {
-      toast('🙃 You can\'t add yourself!');
-      return;
-    }
-
-    // 4. Add to local list
-    list.push(username);
-    saveGymbros(list);
-    input.value = '';
-    renderGymbros();
-    toast(`🤝 ${username} added!`);
-
-  } catch (err) {
-    console.error(err);
-    toast('Error checking user. Please try again.');
   }
 }
 
 function removeGymbro(username) {
-  if (!confirm(`Remove ${username} from your gymbros?`)) return;
-  let list = getGymbros().filter(u => u !== username);
-  saveGymbros(list);
-  renderGymbros();
-  toast(`Removed ${username}`);
+  // Handled via Supabase database relations
 }
 
 function viewGymbroProfile(username) {
@@ -1062,11 +1014,7 @@ function viewGymbroProfile(username) {
       <div style="text-align:center;padding:20px 0;">
         <div style="font-size:48px;">🏋️</div>
         <h4 style="margin:12px 0 4px;">${username}</h4>
-        <p class="muted-text">Gymbro since ${new Date().toLocaleDateString()}</p>
-        <hr style="border-color:var(--card-border);margin:16px 0;" />
-        <p style="font-size:13px;color:var(--text2);">💪 0 sessions</p>
-        <p style="font-size:13px;color:var(--text2);">🏆 0 PRs</p>
-        <p style="font-size:13px;color:var(--text2);">🔥 0 day streak</p>
+        <p class="muted-text">Active Gymbro</p>
       </div>
     `;
   }
@@ -1074,41 +1022,7 @@ function viewGymbroProfile(username) {
 }
 
 function renderGymbros() {
-  const container = document.getElementById('gymbros-list');
-  if (!container) return;
-
-  const searchInput = document.getElementById('gymbro-search');
-  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
-  let list = getGymbros();
-
-  if (query) {
-    list = list.filter(u => u.toLowerCase().includes(query));
-  }
-
-  if (list.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <span class="empty-icon">🤝</span>
-        <p>No gymbros yet. Add your first friend above!</p>
-        <p style="font-size:12px;color:var(--text3);">Search by username to find and add them.</p>
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = list.map(username => `
-    <div class="gymbro-card">
-      <div class="gymbro-avatar">🏋️</div>
-      <div class="gymbro-info">
-        <div class="gymbro-name">${escHtml(username)}</div>
-        <div class="gymbro-stats">💪 0 sessions · 🏆 0 PRs</div>
-      </div>
-      <div class="gymbro-actions">
-        <button class="btn btn-sm btn-ghost" onclick="viewGymbroProfile('${escHtml(username)}')">View</button>
-        <button class="btn btn-sm btn-danger" onclick="removeGymbro('${escHtml(username)}')">✕</button>
-      </div>
-    </div>
-  `).join('');
+  renderGymbrosSocial();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -3200,7 +3114,7 @@ function saveGoal() {
   toast('Goal set!');
   renderWeeklyGoals();      
   syncUserDataToCloud();
-  
+
 }
 
 function renderWeeklyGoals() {
@@ -6179,6 +6093,11 @@ function renderAuthState() {
     if (nameEl)   nameEl.textContent   = uname;
     if (emailEl)  emailEl.textContent  = user.email || '';
     if (avatarEl) avatarEl.textContent = getAvatarForUsername(uname);
+    
+    // Start social status updates
+    if (typeof startStatusHeartbeat === 'function') {
+      startStatusHeartbeat();
+    }
   } else {
     authCard.style.display     = '';
     loggedinCard.style.display = 'none';
@@ -6190,6 +6109,11 @@ function renderAuthState() {
     });
     document.querySelectorAll('.auth-eye-btn').forEach(btn => { btn.textContent = '👁'; });
     document.querySelectorAll('.auth-pw-input').forEach(inp => { inp.type = 'password'; });
+    
+    // Stop social status updates
+    if (typeof stopStatusHeartbeat === 'function') {
+      stopStatusHeartbeat();
+    }
   }
 }
 
@@ -7038,3 +6962,570 @@ async function manualSync() {
   }
 }
 window.manualSync = manualSync;
+
+function resetUserData() {
+  if (!confirm('⚠️ This will delete ALL your progress data (sessions, PRs, logs, custom exercises). Your settings and account will stay.\n\nContinue?')) return;
+  if (!confirm('Are you absolutely sure? Type "RESET" to confirm.')) return;
+  const confirmation = prompt('Type "RESET" to confirm:');
+  if (confirmation !==  'RESET') { toast('Cancelled'); return; }
+
+  // Reset all tracking data
+  DB.set('sessions', []);
+  DB.set('prs', {});
+  DB.set('weightLog', []);
+  DB.set('weightLossGoal', null);
+  DB.set('cardioLog', []);
+  DB.set('cardioGoal', null);
+  DB.set('waterLog', []);
+  DB.set('foodLog', []);
+  DB.set('weeklyGoals', []);
+  DB.set('weeklyDietPlan', null);
+  DB.set('customWorkouts', []);
+  DB.set('customFoods', []);
+  DB.set('workoutQueue', []);
+  DB.set('lastHydrationReminder', null); // reset reminder state
+
+  // Also update the current profile's snapshot so switching profiles works correctly
+  const currentId = DB.get('currentProfileId');
+  if (currentId) {
+    let profilesData = DB.get('profilesData', {});
+    if (profilesData[currentId]) {
+      profilesData[currentId].data.sessions = [];
+      profilesData[currentId].data.prs = {};
+      profilesData[currentId].data.weightLog = [];
+      profilesData[currentId].data.weightLossGoal = null;
+      profilesData[currentId].data.cardioLog = [];
+      profilesData[currentId].data.cardioGoal = null;
+      profilesData[currentId].data.waterLog = [];
+      profilesData[currentId].data.foodLog = [];
+      profilesData[currentId].data.weeklyGoals = [];
+      profilesData[currentId].data.weeklyDietPlan = null;
+      profilesData[currentId].data.customWorkouts = [];
+      profilesData[currentId].data.customFoods = [];
+      profilesData[currentId].savedAt = new Date().toISOString();
+      DB.set('profilesData', profilesData);
+    }
+  }
+
+  // Invalidate exercise cache
+  if (window.invalidateExerciseCache) window.invalidateExerciseCache();
+
+  toast('✅ All progress data has been reset!');
+  // Refresh UI
+  renderDashboard();
+  renderWorkouts();
+  renderProgress();
+  renderWeeklySchedule();
+  renderCalorieTracker();
+  renderWater();
+  renderGoals();
+  renderPRLists();
+  loadWorkoutQueue();
+  // Maybe show a welcome back state
+    syncUserDataToCloud();
+
+}
+window.resetUserData = resetUserData;
+
+// ─── Gymbro Social Page & Real-time Chat Implementation ───
+
+// Active social state variables
+let activeChatId = null;
+let activeChatFriendId = null;
+let activeChatSubscription = null;
+let activeFriendStatusSubscription = null;
+let gymbrosListenersSet = false;
+let statusHeartbeatInterval = null;
+
+// Initial navigation and render wrapper
+async function renderGymbrosSocial() {
+  const currentUser = getAuthUser();
+  const friendsListContainer = document.getElementById('gymbros-friends-list');
+  const requestsListContainer = document.getElementById('gymbro-requests-list');
+  const searchResultsContainer = document.getElementById('gymbro-search-results');
+  const reqBadge = document.getElementById('request-count-badge');
+  const friendBadge = document.getElementById('friend-count-badge');
+  
+  if (!currentUser) {
+    if (friendsListContainer) {
+      friendsListContainer.innerHTML = `
+        <div class="empty-state">
+          <span class="empty-icon">🤝</span>
+          <p>Sign in to connect with other Gymbros!</p>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="openProfileModal()">Sign In / Sign Up</button>
+        </div>
+      `;
+    }
+    if (requestsListContainer) {
+      requestsListContainer.innerHTML = '<p class="muted-text">Please log in to view requests.</p>';
+    }
+    if (searchResultsContainer) searchResultsContainer.style.display = 'none';
+    if (reqBadge) reqBadge.style.display = 'none';
+    if (friendBadge) friendBadge.textContent = '0';
+    return;
+  }
+
+  // Setup event handlers once
+  setupGymbrosEventListeners();
+
+  // Pull fresh lists concurrently
+  await Promise.all([
+    loadAndRenderFriendRequests(),
+    loadAndRenderFriendsList()
+  ]);
+}
+window.renderGymbrosSocial = renderGymbrosSocial;
+
+function setupGymbrosEventListeners() {
+  if (gymbrosListenersSet) return;
+
+  const searchBtn = document.getElementById('gymbro-search-btn');
+  const searchInput = document.getElementById('gymbro-search-input');
+  const chatSendBtn = document.getElementById('chat-send-btn');
+  const chatMessageInput = document.getElementById('chat-message-input');
+
+  if (searchBtn) {
+    searchBtn.addEventListener('click', performGymbroSearch);
+  }
+  if (searchInput) {
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') performGymbroSearch();
+    });
+  }
+
+  if (chatSendBtn) {
+    chatSendBtn.addEventListener('click', handleSendChatMessage);
+  }
+  if (chatMessageInput) {
+    chatMessageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleSendChatMessage();
+    });
+  }
+
+  gymbrosListenersSet = true;
+}
+
+// User search
+async function performGymbroSearch() {
+  const input = document.getElementById('gymbro-search-input');
+  if (!input) return;
+
+  const query = input.value.trim();
+  if (!query) {
+    toast('Please enter a username to search');
+    return;
+  }
+
+  const resultsContainer = document.getElementById('gymbro-search-results');
+  if (!resultsContainer) return;
+
+  resultsContainer.style.display = 'block';
+  resultsContainer.innerHTML = '<p class="muted-text">🔍 Searching...</p>';
+
+  const users = await searchUsers(query);
+  if (!users || users.length === 0) {
+    resultsContainer.innerHTML = '<p class="muted-text">❌ No users found.</p>';
+    return;
+  }
+
+  resultsContainer.innerHTML = users.map(user => `
+    <div class="gymbro-search-item">
+      <div class="gymbro-search-item-info">
+        <div class="gymbro-search-item-avatar">${escHtml(user.avatar || '👤')}</div>
+        <div>
+          <div class="gymbro-search-item-name">${escHtml(user.username)}</div>
+          <div class="gymbro-search-item-streak">🔥 ${user.streak || 0} day streak</div>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-primary" onclick="handleAddFriend('${escHtml(user.username)}')">Add</button>
+    </div>
+  `).join('');
+}
+window.performGymbroSearch = performGymbroSearch;
+
+// Friend request sending
+async function handleAddFriend(username) {
+  const success = await sendFriendRequest(username);
+  if (success) {
+    const input = document.getElementById('gymbro-search-input');
+    if (input) input.value = '';
+    
+    const resultsContainer = document.getElementById('gymbro-search-results');
+    if (resultsContainer) resultsContainer.style.display = 'none';
+
+    // Reload friend list & requests
+    await Promise.all([
+      loadAndRenderFriendRequests(),
+      loadAndRenderFriendsList()
+    ]);
+  }
+}
+window.handleAddFriend = handleAddFriend;
+
+// Friend requests rendering
+async function loadAndRenderFriendRequests() {
+  const requests = await getFriendRequests();
+  const badge = document.getElementById('request-count-badge');
+  const container = document.getElementById('gymbro-requests-list');
+
+  if (requests && requests.length > 0) {
+    if (badge) {
+      badge.textContent = requests.length;
+      badge.style.display = 'inline-flex';
+    }
+    if (container) {
+      container.innerHTML = requests.map(req => `
+        <div class="gymbro-request-card">
+          <div class="gymbro-request-card-info">
+            <div class="gymbro-request-card-avatar">${escHtml(req.sender.avatar || '👤')}</div>
+            <div>
+              <div class="gymbro-request-card-name">${escHtml(req.sender.username)}</div>
+              <div class="gymbro-request-card-sub">wants to be gymbros</div>
+            </div>
+          </div>
+          <div class="gymbro-request-card-actions">
+            <button class="btn btn-sm btn-primary" onclick="handleAcceptFriendRequest('${req.id}')">Accept</button>
+            <button class="btn btn-sm btn-ghost" onclick="handleDeclineFriendRequest('${req.id}')">Decline</button>
+          </div>
+        </div>
+      `).join('');
+    }
+  } else {
+    if (badge) badge.style.display = 'none';
+    if (container) {
+      container.innerHTML = '<p class="muted-text">No pending requests.</p>';
+    }
+  }
+}
+window.loadAndRenderFriendRequests = loadAndRenderFriendRequests;
+
+// Accept request handler
+async function handleAcceptFriendRequest(requestId) {
+  const success = await acceptFriendRequest(requestId);
+  if (success) {
+    await Promise.all([
+      loadAndRenderFriendRequests(),
+      loadAndRenderFriendsList()
+    ]);
+  }
+}
+window.handleAcceptFriendRequest = handleAcceptFriendRequest;
+
+// Decline request handler
+async function handleDeclineFriendRequest(requestId) {
+  const success = await declineFriendRequest(requestId);
+  if (success) {
+    await loadAndRenderFriendRequests();
+  }
+}
+window.handleDeclineFriendRequest = handleDeclineFriendRequest;
+
+// Friends rendering
+async function loadAndRenderFriendsList() {
+  const friends = await getFriends();
+  const countBadge = document.getElementById('friend-count-badge');
+  if (countBadge) countBadge.textContent = friends.length;
+
+  const container = document.getElementById('gymbros-friends-list');
+  if (!container) return;
+
+  if (friends && friends.length > 0) {
+    container.innerHTML = friends.map(friend => {
+      const statusClass = friend.is_online ? 'online' : 'offline';
+      const formattedVolume = friend.total_volume >= 1000 
+        ? (friend.total_volume / 1000).toFixed(1) + 'k' 
+        : friend.total_volume;
+
+      return `
+        <div class="gymbro-friend-card" id="friend-card-${friend.friend_id}">
+          <div class="gymbro-friend-card-info" onclick="openChat('${friend.friend_id}', '${escHtml(friend.username)}', '${escHtml(friend.avatar)}', ${friend.is_online})">
+            <div class="gymbro-friend-card-avatar-wrap">
+              <div class="gymbro-friend-card-avatar">${escHtml(friend.avatar)}</div>
+              <div class="gymbro-friend-card-status-badge ${statusClass}" id="status-badge-${friend.friend_id}"></div>
+            </div>
+            <div class="gymbro-friend-card-details">
+              <div class="gymbro-friend-card-name">${escHtml(friend.username)}</div>
+              <div class="gymbro-friend-card-stats">🔥 ${friend.streak} streak · 🏆 ${friend.pr_count} PRs · 🏋️ ${formattedVolume} kg</div>
+            </div>
+          </div>
+          <div class="gymbro-friend-card-actions">
+            <button class="btn btn-sm btn-primary" onclick="openChat('${friend.friend_id}', '${escHtml(friend.username)}', '${escHtml(friend.avatar)}', ${friend.is_online})">Chat 💬</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Setup active status listeners
+    if (activeFriendStatusSubscription && supabaseClient) {
+      supabaseClient.removeChannel(activeFriendStatusSubscription);
+    }
+    const friendIds = friends.map(f => f.friend_id);
+    activeFriendStatusSubscription = subscribeToUserStatus(friendIds, (statusUpdate) => {
+      const badge = document.getElementById(`status-badge-${statusUpdate.user_id}`);
+      if (badge) {
+        badge.className = `gymbro-friend-card-status-badge ${statusUpdate.is_online ? 'online' : 'offline'}`;
+      }
+      
+      // Update active Chat header status if matching
+      if (activeChatFriendId === statusUpdate.user_id) {
+        const chatStatus = document.getElementById('chat-friend-status');
+        if (chatStatus) {
+          chatStatus.className = 'chat-header-status';
+          chatStatus.innerHTML = statusUpdate.is_online 
+            ? `<span class="status-dot online"></span> Online` 
+            : `<span class="status-dot offline"></span> Offline`;
+        }
+      }
+    });
+  } else {
+    container.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon">👥</span>
+        <p>Add your first gymbro to get started!</p>
+      </div>
+    `;
+  }
+}
+window.loadAndRenderFriendsList = loadAndRenderFriendsList;
+
+// Open Chat
+async function openChat(friendId, username, avatar, isOnline) {
+  // Clean up existing chat subscription
+  if (activeChatSubscription && supabaseClient) {
+    supabaseClient.removeChannel(activeChatSubscription);
+  }
+
+  activeChatFriendId = friendId;
+
+  // Set chat details
+  const nameEl = document.getElementById('chat-friend-name');
+  const avatarEl = document.getElementById('chat-friend-avatar');
+  const statusEl = document.getElementById('chat-friend-status');
+  const messagesContainer = document.getElementById('chat-messages-container');
+
+  if (nameEl) nameEl.textContent = username;
+  if (avatarEl) avatarEl.textContent = avatar;
+  if (statusEl) {
+    statusEl.innerHTML = isOnline 
+      ? `<span class="status-dot online"></span> Online` 
+      : `<span class="status-dot offline"></span> Offline`;
+  }
+
+  if (messagesContainer) {
+    messagesContainer.innerHTML = `
+      <div class="chat-messages-empty">
+        <div class="chat-messages-empty-icon">💬</div>
+        <div class="chat-messages-empty-text">Loading chat history...</div>
+      </div>
+    `;
+  }
+
+  openModal('chat-modal');
+
+  // Load chat session from Supabase
+  const chat = await getOrCreateChat(friendId);
+  if (!chat) {
+    closeChatModal();
+    return;
+  }
+
+  activeChatId = chat.id;
+
+  // Fetch past messages
+  const messages = await getMessages(chat.id);
+  renderMessages(messages);
+
+  // Subscribe to real-time updates
+  activeChatSubscription = subscribeToMessages(chat.id, (newMsg) => {
+    appendChatMessage(newMsg);
+  });
+}
+window.openChat = openChat;
+
+// Close Chat
+function closeChatModal() {
+  if (activeChatSubscription && supabaseClient) {
+    supabaseClient.removeChannel(activeChatSubscription);
+    activeChatSubscription = null;
+  }
+  activeChatId = null;
+  activeChatFriendId = null;
+
+  const input = document.getElementById('chat-message-input');
+  if (input) input.value = '';
+
+  closeModal('chat-modal');
+}
+window.closeChatModal = closeChatModal;
+
+// Render Messages helper
+function renderMessages(messages) {
+  const container = document.getElementById('chat-messages-container');
+  if (!container) return;
+
+  if (!messages || messages.length === 0) {
+    container.innerHTML = `
+      <div class="chat-messages-empty">
+        <div class="chat-messages-empty-icon">🤝</div>
+        <div class="chat-messages-empty-text">Send a message to start the conversation!</div>
+      </div>
+    `;
+    return;
+  }
+
+  const currentUser = getAuthUser();
+  container.innerHTML = messages.map(msg => {
+    const isSent = msg.sender_id === currentUser.id;
+    const dateStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const rowClass = isSent ? 'sent' : 'received';
+
+    return `
+      <div class="chat-message-row ${rowClass}">
+        <div class="message-bubble">
+          <div class="message-content">${escHtml(msg.content)}</div>
+          <div class="message-meta">
+            <span class="message-time">${dateStr}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  scrollToBottom();
+}
+
+// Append Chat Message helper (used by realtime subscriptions)
+function appendChatMessage(msg) {
+  const container = document.getElementById('chat-messages-container');
+  if (!container) return;
+
+  // Clear placeholder if present
+  const placeholder = container.querySelector('.chat-messages-empty');
+  if (placeholder) placeholder.remove();
+
+  const currentUser = getAuthUser();
+  const isSent = msg.sender_id === currentUser.id;
+  const dateStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const rowClass = isSent ? 'sent' : 'received';
+
+  // Avoid duplicate elements (in case of race conditions)
+  const existingMsg = Array.from(container.querySelectorAll('.message-content'))
+    .some(el => el.textContent === msg.content && el.nextElementSibling?.querySelector('.message-time')?.textContent === dateStr);
+  
+  if (existingMsg && isSent) return; // ignore duplicates of user's own sent messages if already rendered by luck
+
+  const row = document.createElement('div');
+  row.className = `chat-message-row ${rowClass}`;
+  row.innerHTML = `
+    <div class="message-bubble">
+      <div class="message-content">${escHtml(msg.content)}</div>
+      <div class="message-meta">
+        <span class="message-time">${dateStr}</span>
+      </div>
+    </div>
+  `;
+  container.appendChild(row);
+  scrollToBottom();
+}
+
+// Send Message handler
+async function handleSendChatMessage() {
+  const input = document.getElementById('chat-message-input');
+  if (!input) return;
+
+  const content = input.value.trim();
+  if (!content || !activeChatId) return;
+
+  input.value = ''; // clear immediately for latency masking
+  
+  // Call API to send
+  await sendMessage(activeChatId, content);
+}
+window.handleSendChatMessage = handleSendChatMessage;
+
+// Share Latest PR action
+async function shareLatestPR() {
+  const prs = DB.get('prs', {});
+  const entries = Object.entries(prs);
+  if (!entries.length) {
+    toast('No PRs logged yet. Log a workout or set a PR first!');
+    return;
+  }
+
+  // Sort and select the latest PR
+  const latestPr = entries
+    .map(([, pr]) => pr)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+
+  const content = `🏆 I set a new PR: ${latestPr.name} - ${latestPr.weight}kg! 💪`;
+  
+  const input = document.getElementById('chat-message-input');
+  if (input) {
+    input.value = content;
+    handleSendChatMessage();
+  }
+}
+window.shareLatestPR = shareLatestPR;
+
+// Scroll to bottom helper
+function scrollToBottom() {
+  const container = document.getElementById('chat-messages-container');
+  if (container) {
+    requestAnimationFrame(() => {
+      container.scrollTop = container.scrollHeight;
+    });
+  }
+}
+
+// Heartbeat online/offline status management
+function startStatusHeartbeat() {
+  if (statusHeartbeatInterval) clearInterval(statusHeartbeatInterval);
+
+  // Set online immediately
+  updateUserStatus(true);
+
+  // Periodic updates while tab is active
+  statusHeartbeatInterval = setInterval(() => {
+    if (getAuthUser() && document.visibilityState === 'visible') {
+      updateUserStatus(true);
+    }
+  }, 45000);
+}
+
+function stopStatusHeartbeat() {
+  if (statusHeartbeatInterval) {
+    clearInterval(statusHeartbeatInterval);
+    statusHeartbeatInterval = null;
+  }
+  updateUserStatus(false);
+}
+
+// Focus/Blur and unload listeners
+window.addEventListener('focus', () => {
+  if (getAuthUser()) updateUserStatus(true);
+});
+
+window.addEventListener('blur', () => {
+  if (getAuthUser()) updateUserStatus(false);
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (getAuthUser()) {
+    updateUserStatus(document.visibilityState === 'visible');
+  }
+});
+
+window.addEventListener('beforeunload', () => {
+  if (getAuthUser()) {
+    updateUserStatus(false);
+  }
+});
+
+// Initialize heartbeat if user starts logged in
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    if (getAuthUser()) {
+      startStatusHeartbeat();
+    }
+  }, 2000);
+});

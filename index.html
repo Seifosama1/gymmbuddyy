@@ -773,35 +773,43 @@
   </div>
 </section>
 
-<!-- ═══════════════════ GYMBROS ═══════════════════ -->
-<section class="page" id="page-gymbros">
-  <div class="page-scroll">
-    <div class="page-header">
-      <h2 class="page-title">Gymbros 🤝</h2>
-    </div>
-    
-    <!-- Add Friend -->
-    <div class="card" style="margin-bottom:16px;">
-      <div class="form-group" style="margin-bottom:8px;">
-        <label class="form-label">Add by Username</label>
-        <div style="display:flex;gap:8px;">
-          <input type="text" class="form-input" id="gymbro-username-input" placeholder="Enter username..." style="flex:1;" />
-          <button class="btn btn-primary" onclick="addGymbro()">Add</button>
+      <!-- ═══════════════════ GYMBROS ═══════════════════ -->
+      <section class="page" id="page-gymbros">
+        <div class="page-scroll">
+          <!-- Header -->
+          <div class="page-header">
+            <h2 class="page-title">🤝 Gymbros</h2>
+          </div>
+
+          <!-- Search & Add -->
+          <div class="card">
+            <div class="form-group" style="margin-bottom:8px;">
+              <label class="form-label">Find Users</label>
+              <div style="display:flex;gap:8px;">
+                <input type="text" class="form-input" id="gymbro-search-input" placeholder="Search username..." style="flex:1;" />
+                <button class="btn btn-primary" id="gymbro-search-btn">Search</button>
+              </div>
+            </div>
+            <div id="gymbro-search-results" style="display:none; margin-top:8px;"></div>
+          </div>
+
+          <!-- Friend Requests -->
+          <div class="section-header" style="margin-top:16px;">
+            <h3 class="section-title">📨 Requests <span id="request-count-badge" class="badge" style="display:none;">0</span></h3>
+          </div>
+          <div id="gymbro-requests-list">
+            <p class="muted-text">No pending requests.</p>
+          </div>
+
+          <!-- Your Gymbros -->
+          <div class="section-header" style="margin-top:24px;">
+            <h3 class="section-title">👥 Your Gymbros <span id="friend-count-badge">0</span></h3>
+          </div>
+          <div id="gymbros-friends-list">
+            <p class="muted-text">Add your first gymbro to get started!</p>
+          </div>
         </div>
-      </div>
-    </div>
-    
-    <!-- Search -->
-    <div class="search-wrap" style="margin-bottom:12px;">
-      <input type="text" class="search-input" id="gymbro-search" placeholder="Search gymbros..." oninput="renderGymbros()" />
-    </div>
-    
-    <!-- Friend List -->
-    <div id="gymbros-list">
-      <!-- rendered dynamically -->
-    </div>
-  </div>
-</section>
+      </section>
       
     </main>
 
@@ -1522,11 +1530,13 @@
             <button class="btn btn-sm" onclick="importDataFromFile()">Import</button>
             <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importAllData(this)" />
           </div>
-          <div class="settings-row">
-            <span>Clear all data</span>
-            <button class="btn btn-sm btn-danger" onclick="clearAllData()">Clear</button>
-          </div>
-        </div>
+        <div class="settings-row" >
+  <span>Reset all progress data</span>
+  <button class="btn btn-sm btn-danger" onclick="resetUserData()">Reset Data</button>
+</div>
+<div class="settings-note" style="margin-bottom: 10px;">This clears sessions, PRs, logs, custom foods/workouts. Keeps your settings and account.</div>
+
+        
         
         <!-- Account Management — shown only when logged in -->
         <div class="settings-section" id="settings-account-section" style="display:none">
@@ -1641,10 +1651,41 @@
     </div>
   </div>
 
+  <!-- Chat Modal -->
+  <div class="modal-overlay" id="chat-modal">
+    <div class="modal modal--tall chat-modal-content">
+      <div class="modal-header chat-modal-header">
+        <div class="chat-header-user">
+          <span class="chat-header-avatar" id="chat-friend-avatar">👤</span>
+          <div class="chat-header-info">
+            <h3 id="chat-friend-name">Gymbro</h3>
+            <span class="chat-header-status" id="chat-friend-status"><span class="status-dot"></span> Offline</span>
+          </div>
+        </div>
+        <button class="icon-btn" onclick="closeChatModal()">✕</button>
+      </div>
+      <div class="modal-body chat-modal-body" id="chat-messages-container">
+        <!-- Messages loaded dynamically -->
+      </div>
+      <div class="modal-footer chat-modal-footer">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:11px; color:var(--text2);">Quick action:</span>
+          <button class="btn btn-sm btn-ghost" onclick="shareLatestPR()" style="font-size:11px; padding:4px 8px; margin:0;">🏆 Share Latest PR</button>
+        </div>
+        <div class="chat-input-wrap">
+          <input type="text" id="chat-message-input" class="form-input chat-input" placeholder="Type a message..." autocomplete="off" />
+          <button class="btn btn-primary chat-send-btn" id="chat-send-btn">Send 🚀</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="workouts-data.js"></script>
   <script src="sounds.js"></script>
+  <script src="gymbro.js"></script>
   <script src="app.js"></script>
   
 </body>
