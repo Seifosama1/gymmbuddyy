@@ -592,3 +592,61 @@ function subscribeToUserStatus(userIds, onStatusChange) {
 
   return channel;
 }
+
+/**
+ * 13. Get Count of Unread Chats (not total messages)
+ * Counts how many unique chats have at least one unread message sent by someone else.
+ */
+async function checkUnreadChatsCount() {
+  const currentUser = getAuthUser();
+  if (!currentUser) return 0;
+
+  try {
+    const client = await getSupabaseClient();
+    if (!client) return 0;
+
+    // Get messages sent to/in chats that are unread and not sent by the currentUser
+    const { data: unreadMsgs, error } = await client
+      .from('messages')
+      .select('chat_id')
+      .is('read_at', null)
+      .not('sender_id', 'eq', currentUser.id);
+
+    if (error) throw error;
+
+    if (!unreadMsgs || unreadMsgs.length === 0) return 0;
+
+    // Filter to find unique chat IDs
+    const uniqueChats = new Set(unreadMsgs.map(m => m.chat_id));
+    return uniqueChats.size;
+  } catch (err) {
+    console.error('[Gymbro] checkUnreadChatsCount error:', err);
+    return 0;
+  }
+}
+
+/**
+ * 14. Subscribe to Unread Chats changes
+ * Listens for new messages inside any conversation to update the unread chat count.
+ */
+function subscribeToUnreadChats(onChange) {
+  if (!supabaseClient) return null;
+
+  const channel = supabaseClient
+    .channel('unread_chats_channel')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'messages' },
+      () => {
+        onChange();
+      }
+    )
+    .subscribe();
+
+  return channel;
+}
+
+// Export the functions to the window scope
+window.checkUnreadChatsCount = checkUnreadChatsCount;
+window.subscribeToUnreadChats = subscribeToUnreadChats;
+

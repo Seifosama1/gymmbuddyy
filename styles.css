@@ -130,6 +130,7 @@ body {
   color: var(--text3);
   transition: color var(--transition);
   font-family: var(--font);
+  position: relative; /* For positioning absolute badge dots */
   /* eliminate 300ms tap delay on mobile */
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -137,6 +138,21 @@ body {
 .nav-btn.active { color: var(--accent); }
 .nav-icon { font-size: 20px; line-height: 1; }
 .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.3px; }
+
+/* Red notification badge dot for bottom tab bar items */
+.tab-badge {
+  position: absolute;
+  top: 4px;
+  right: calc(50% - 16px);
+  width: 9px;
+  height: 9px;
+  background: var(--danger, #ff4757);
+  border-radius: 50%;
+  border: 1.5px solid #0a0a0f;
+  box-shadow: 0 0 6px rgba(255, 71, 87, 0.6);
+  display: none; /* Dynamic via JS */
+  pointer-events: none;
+}
 
 /* ── Cards ── */
 .card {

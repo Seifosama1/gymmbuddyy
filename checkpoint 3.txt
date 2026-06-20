@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
 
-  <title>Jim Buddy</title>
+  <title>Jimm Buddy</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -68,7 +68,10 @@
         <div class="page-scroll">
           <div class="page-header">
             <h2 class="page-title">Weekly Schedule</h2>
-            <button class="btn btn-primary btn-sm" onclick="resetWeeklySchedule()">Reset Plan</button>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button class="btn btn-ghost btn-sm" id="copy-schedule-btn" onclick="copyScheduleToClipboard()" title="Copy schedule to clipboard">📋 Copy</button>
+              <button class="btn btn-primary btn-sm" onclick="resetWeeklySchedule()">Reset Plan</button>
+            </div>
           </div>
           
           <div class="schedule-intro">
@@ -237,6 +240,39 @@
             </div>
             <div id="pr-list-workout" style="padding: 8px; max-height: 200px; overflow-y: auto;">
               <p class="muted-text" style="text-align:center;">No PRs yet. Log a workout or use the calculator!</p>
+            </div>
+          </div>
+
+          <!-- Plate Weight Calculator -->
+          <div class="card-premium" style="margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+              <span style="font-size: 20px;">🏋️‍♂️</span>
+              <h4 style="font-size: 16px; font-weight: 700; color: var(--text);">Plate Weight Calculator</h4>
+            </div>
+            
+            <p class="muted-text" style="font-size: 12px; margin-bottom: 12px;">
+              Enter your target weight to instantly calculate required plates per side (assuming a standard 20kg barbell).
+            </p>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+              <input type="number" id="plate-target-weight" placeholder="Target Weight (kg)" class="form-input" style="flex: 1; margin: 0;" min="20" step="2.5" value="60">
+              <button class="btn btn-primary" onclick="calculateBarbellPlates()" style="padding: 0 16px; height: 42px; margin: 0;">Calculate</button>
+            </div>
+
+            <div id="plate-calculator-results" style="display: none; background: rgba(0,0,0,0.2); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--card-border);">
+              <div style="text-align: center; margin-bottom: 12px;">
+                <span class="muted-text" style="font-size: 11px; display: block; text-transform: uppercase; letter-spacing: 0.5px;">Weight Per Side</span>
+                <span id="weight-per-side-text" style="font-size: 20px; font-weight: 800; color: var(--accent);">0 kg</span>
+              </div>
+              
+              <div style="display: flex; align-items: center; justify-content: center; min-height: 50px; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; margin-bottom: 12px; position: relative;">
+                <div style="position: absolute; left: 10%; right: 10%; height: 6px; background: #55556A; border-radius: 3px; z-index: 1;"></div>
+                <div style="width: 8px; height: 32px; background: #8888A0; border-radius: 2px; z-index: 2; margin-right: 4px; position: relative; left: -10px;"></div>
+                <div id="plate-visual-stack" style="display: flex; align-items: center; gap: 3px; z-index: 3;"></div>
+              </div>
+
+              <div id="plate-text-breakdown" style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--text2);">
+              </div>
             </div>
           </div>
 
@@ -483,6 +519,7 @@
                <div class="page-header">
         <h2 class="page-title">Hydration 💧</h2>
         <button class="btn btn-sm btn-ghost" onclick="openHydrationReminderModal()">⏰ Reminders</button>
+        <button class="btn btn-sm btn-ghost" onclick="sendHydrationNotification('💧 Test reminder from settings!')">🔔 Test</button>
       </div>
 
           <!-- Water Bottle Visual -->
@@ -599,22 +636,13 @@
             <h3 class="section-title">💡 Meal Ideas</h3>
             <div class="meal-suggestions-grid" id="meal-suggestions-grid"></div>
           </div>
-        </div>
-      </section>
 
-
-      
-      <!-- ═══════════════════ CALORIE CALCULATOR ═══════════════════ -->
-      <section class="page" id="page-calculator">
-        <div class="page-scroll">
-          <div class="page-header">
+          <!-- Calorie Calculator Section -->
+          <div class="page-header" id="calorie-calculator-section" style="margin-top: 32px; border-top: 1px solid var(--card-border); padding-top: 24px;">
             <h2 class="page-title">Calorie Calculator 🧮</h2>
             <button class="btn btn-primary btn-sm" onclick="saveCalculatorProfile()">Save Profile</button>
-            
           </div>
 
-
-          
           <!-- Calculator Card -->
           <div class="calculator-card">
             <h3 class="calculator-title">Your Stats</h3>
@@ -665,7 +693,7 @@
               </select>
             </div>
             
-            <button class="btn btn-primary calculate-btn" onclick="calculateCalories()">Calculate 🔥</button>
+            <button class="btn btn-primary calculate-btn" onclick="calculateCalories()" style="width: 100%;">Calculate 🔥</button>
           </div>
 
           <!-- Results Card -->
@@ -703,57 +731,84 @@
             </div>
           </div>
 
-
-
           <!-- Saved Profile Info -->
-          <div class="saved-profile" id="saved-profile" style="display: none;">
+          <div class="saved-profile" id="saved-profile" style="display: none; margin-top: 16px;">
             <div class="saved-profile-header">
               <span>💾 Saved Profile</span>
               <button class="btn btn-sm btn-ghost" onclick="clearSavedProfile()">Clear</button>
             </div>
             <div id="saved-profile-info"></div>
           </div>
-          <div class="card-premium" style="margin-top: 16px;">
-  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-    <span style="font-size: 20px;">🏋️‍♂️</span>
-    <h4 style="font-size: 16px; font-weight: 700; color: var(--text);">Plate Weight Calculator</h4>
-  </div>
-  
-  <p class="muted-text" style="font-size: 12px; margin-bottom: 12px;">
-    Enter your target weight to instantly calculate required plates per side (assuming a standard 20kg barbell).
-  </p>
-
-  <div style="display: flex; gap: 10px; margin-bottom: 16px;">
-    <input type="number" id="plate-target-weight" placeholder="Target Weight (kg)" class="form-input" style="flex: 1; margin: 0;" min="20" step="2.5" value="60">
-    <button class="btn btn-primary" onclick="calculateBarbellPlates()" style="padding: 0 16px; height: 42px; margin: 0;">Calculate</button>
-  </div>
-
-  <div id="plate-calculator-results" style="display: none; background: rgba(0,0,0,0.2); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--card-border);">
-    <div style="text-align: center; margin-bottom: 12px;">
-      <span class="muted-text" style="font-size: 11px; display: block; text-transform: uppercase; letter-spacing: 0.5px;">Weight Per Side</span>
-      <span id="weight-per-side-text" style="font-size: 20px; font-weight: 800; color: var(--accent);">0 kg</span>
-    </div>
-    
-    <div style="display: flex; align-items: center; justify-content: center; min-height: 50px; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; margin-bottom: 12px; position: relative;">
-      <div style="position: absolute; left: 10%; right: 10%; height: 6px; background: #55556A; border-radius: 3px; z-index: 1;"></div>
-      <div style="width: 8px; height: 32px; background: #8888A0; border-radius: 2px; z-index: 2; margin-right: 4px; position: relative; left: -10px;"></div>
-      <div id="plate-visual-stack" style="display: flex; align-items: center; gap: 3px; z-index: 3;"></div>
-    </div>
-
-    <div id="plate-text-breakdown" style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--text2);">
-    </div>
-  </div>
-</div>
         </div>
-        
       </section>
 
+<!-- ═══════════════════ DIET PLAN ═══════════════════ -->
+<section class="page" id="page-diet">
+  <div class="page-scroll">
+    <div class="page-header">
+      <h2 class="page-title">Weekly Diet Plan 📋</h2>
+      <button class="btn btn-primary btn-sm" onclick="generateWeeklyDietPlan()">🔄 Generate</button>
+    </div>
 
+    <!-- Plan status / profile summary -->
+    <div id="diet-profile-summary" class="card" style="margin-bottom:16px;">
+      <p class="muted-text" style="font-size:13px;">⚡ Generate a plan based on your calorie goals.</p>
+    </div>
+
+    <!-- Weekly grid -->
+    <div id="weekly-diet-grid">
+      <div class="empty-state">
+        <span class="empty-icon">📋</span>
+        <p>No diet plan yet. Tap <strong>Generate</strong> to create a week of meals.</p>
+        <p style="font-size:12px;color:var(--text3);margin-top:8px;">Based on your saved profile & calorie goals.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+      <!-- ═══════════════════ GYMBROS ═══════════════════ -->
+      <section class="page" id="page-gymbros">
+        <div class="page-scroll">
+          <!-- Header -->
+          <div class="page-header">
+            <h2 class="page-title">🤝 Gymbros</h2>
+          </div>
+
+          <!-- Search & Add -->
+          <div class="card">
+            <div class="form-group" style="margin-bottom:8px;">
+              <label class="form-label">Find Users</label>
+              <div style="display:flex;gap:8px;">
+                <input type="text" class="form-input" id="gymbro-search-input" placeholder="Search username..." style="flex:1;" />
+                <button class="btn btn-primary" id="gymbro-search-btn">Search</button>
+              </div>
+            </div>
+            <div id="gymbro-search-results" style="display:none; margin-top:8px;"></div>
+          </div>
+
+          <!-- Friend Requests -->
+          <div class="section-header" style="margin-top:16px;">
+            <h3 class="section-title">📨 Requests <span id="request-count-badge" class="badge" style="display:none;">0</span></h3>
+          </div>
+          <div id="gymbro-requests-list">
+            <p class="muted-text">No pending requests.</p>
+          </div>
+
+          <!-- Your Gymbros -->
+          <div class="section-header" style="margin-top:24px;">
+            <h3 class="section-title">👥 Your Gymbros <span id="friend-count-badge">0</span></h3>
+          </div>
+          <div id="gymbros-friends-list">
+            <p class="muted-text">Add your first gymbro to get started!</p>
+          </div>
+        </div>
+      </section>
       
     </main>
 
     <!-- Bottom Nav -->
     <nav id="bottom-nav">
+      
       <button class="nav-btn" data-page="schedule" onclick="navigate('schedule')">
         <span class="nav-icon">📅</span>
         <span class="nav-label">Schedule</span>
@@ -762,6 +817,12 @@
         <span class="nav-icon">💪</span>
         <span class="nav-label">Workouts</span>
       </button>
+      
+<button class="nav-btn" data-page="gymbros" onclick="navigate('gymbros')">
+  <span class="nav-icon">🤝</span>
+  <span class="nav-label">Gymbros</span>
+</button>
+
       <button class="nav-btn" data-page="progress" onclick="navigate('progress')">
         <span class="nav-icon">📊</span>
         <span class="nav-label">Progress</span>
@@ -783,8 +844,28 @@
         <span class="nav-label">Food</span>
       </button>
   
+<button class="nav-btn" data-page="diet" onclick="navigate('diet')">
+  <span class="nav-icon">📋</span>
+  <span class="nav-label">Diets</span>
+</button>
+
     </nav>
   </div>
+
+<!-- ═══════════════════ ONBOARDING TOUR ═══════════════════ -->
+<div id="tour-overlay" style="display:none;">
+  <div class="tour-backdrop"></div>
+  <div class="tour-spotlight" id="tour-spotlight"></div>
+  <div class="tour-tooltip" id="tour-tooltip">
+    <div class="tour-step-counter" id="tour-step-counter">1 / 4</div>
+    <h3 id="tour-title">Welcome to Jim Buddy! 👋</h3>
+    <p id="tour-description">Let's get you set up in just a few steps.</p>
+    <div class="tour-actions">
+      <button class="btn btn-ghost btn-sm" id="tour-skip-btn">Skip</button>
+      <button class="btn btn-primary btn-sm" id="tour-next-btn">Next →</button>
+    </div>
+  </div>
+</div>
 
   <!-- ═══════════════════ MODALS ═══════════════════ -->
 
@@ -1070,6 +1151,22 @@
     </div>
   </div>
 
+  <!-- Gymbro Profile Modal -->
+<div class="modal-overlay" id="gymbro-profile-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="gymbro-profile-name">Profile</h3>
+      <button class="icon-btn" onclick="closeModal('gymbro-profile-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="gymbro-profile-body">
+      <!-- placeholder -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('gymbro-profile-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
   <!-- NEW: 1RM Calculator Modal -->
   <div class="modal-overlay" id="rm-modal">
     <div class="modal">
@@ -1258,10 +1355,13 @@
           <div class="form-group">
             <label class="form-label">Reminder Interval (minutes)</label>
             <select class="form-input" id="reminder-interval">
+              <option value="10">Every 10 minutes</option>
               <option value="30">Every 30 minutes</option>
               <option value="60" selected>Every hour</option>
               <option value="90">Every 90 minutes</option>
               <option value="120">Every 2 hours</option>
+              <option value="360">Every 6 hours</option>   <!-- 👈 add this line -->
+
             </select>
           </div>
           
@@ -1270,7 +1370,6 @@
             <input type="text" class="form-input" id="reminder-message" value="💧 Time to hydrate! Drink some water." />
           </div>
           
-          <button class="btn btn-primary" style="width:100%; margin-top:8px;" onclick="testHydrationReminder()">🔔 Test Reminder</button>
         </div>
         
         <div class="profile-info-note" style="margin-top: 16px;">
@@ -1278,8 +1377,10 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeModal('hydration-reminder-modal')">Cancel</button>
+        <!-- <button class="btn btn-ghost" onclick="closeModal('hydration-reminder-modal')">Cancel</button> -->
         <button class="btn btn-primary" onclick="saveHydrationReminderSettings()">Save Settings</button>
+                  <button class="btn btn-primary"  onclick="testHydrationReminder()">🔔 Test Reminder</button>
+
       </div>
     </div>
   </div>
@@ -1406,6 +1507,7 @@
           <div class="settings-row">
             <span>Set up water reminders</span>
             <button class="btn btn-sm" onclick="closeModal('settings-modal'); openHydrationReminderModal()">Configure</button>
+            
           </div>
         </div>
         
@@ -1421,11 +1523,14 @@
             <button class="btn btn-sm" onclick="importDataFromFile()">Import</button>
             <input type="file" id="import-file-input" style="display:none" accept=".json" onchange="importAllData(this)" />
           </div>
-          <div class="settings-row">
-            <span>Clear all data</span>
-            <button class="btn btn-sm btn-danger" onclick="clearAllData()">Clear</button>
-          </div>
-        </div>
+        <div class="settings-row" >
+  <span>Reset all progress data</span>
+  <button class="btn btn-sm btn-danger" onclick="resetUserData()">Reset Data</button>
+</div>
+<div class="settings-note" style="margin-bottom: 10px;">This clears sessions, PRs, logs, custom foods/workouts. Keeps your settings and account.</div>
+</div>
+
+        
         
         <!-- Account Management — shown only when logged in -->
         <div class="settings-section" id="settings-account-section" style="display:none">
@@ -1540,20 +1645,45 @@
     </div>
   </div>
 
+  <!-- Chat Modal -->
+  <div class="modal-overlay" id="chat-modal">
+    <div class="modal modal--tall chat-modal-content">
+      <div class="modal-header chat-modal-header">
+        <div class="chat-header-user">
+          <span class="chat-header-avatar" id="chat-friend-avatar">👤</span>
+          <div class="chat-header-info">
+            <h3 id="chat-friend-name">Gymbro</h3>
+            <span class="chat-header-status" id="chat-friend-status"><span class="status-dot"></span> Offline</span>
+          </div>
+        </div>
+        <button class="icon-btn" onclick="closeChatModal()">✕</button>
+      </div>
+      <div class="modal-body chat-modal-body" id="chat-messages-container">
+        <!-- Messages loaded dynamically -->
+      </div>
+      <div class="modal-footer chat-modal-footer">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:11px; color:var(--text2);">Quick action:</span>
+          <button class="btn btn-sm btn-ghost" onclick="shareLatestPR()" style="font-size:11px; padding:4px 8px; margin:0;">🏆 Share Latest PR</button>
+        </div>
+        <div class="chat-input-wrap">
+          <input type="text" id="chat-message-input" class="form-input chat-input" placeholder="Type a message..." autocomplete="off" />
+          <button class="btn btn-primary chat-send-btn" id="chat-send-btn">Send 🚀</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="workouts-data.js"></script>
   <script src="sounds.js"></script>
+  <script src="gymbro.js"></script>
   <script src="app.js"></script>
   
 </body>
 </html>
-
-
-
-
-
-
 
 
 
@@ -1605,6 +1735,38 @@ const DB = {
   },
   set: (key, val) => { try { localStorage.setItem('jimbuddy_' + key, JSON.stringify(val)); } catch {} },
 };
+
+// ─── Performance Optimizations ────────────────────────────
+
+// Detect low‑end devices
+const isLowEnd = () => {
+  // Check RAM (approximate via device memory API)
+  if ('deviceMemory' in navigator && navigator.deviceMemory < 4) return true;
+  // Check CPU cores
+  if ('hardwareConcurrency' in navigator && navigator.hardwareConcurrency < 4) return true;
+  return false;
+};
+
+// Throttle wrapper – limits function calls to once per `delay` ms
+function throttle(fn, delay = 300) {
+  let lastCall = 0;
+  return function (...args) {
+    const now = Date.now();
+    if (now - lastCall >= delay) {
+      lastCall = now;
+      return fn.apply(this, args);
+    }
+  };
+}
+
+// Debounce wrapper – waits for idle before executing
+function debounce(fn, delay = 250) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
 
 // ─── Constants ───────────────────────────────────────────
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -1767,6 +1929,351 @@ const FOOD_DATABASE = [
 { id: 'parmesan',          name: 'Parmesan Cheese',             calories: 431, protein: 38,   carbs: 4.1,  fats: 29,   serving: '100g' },
 ];
 
+// ─── Diet Plan Blueprints ──────────────────────────────
+
+// Each blueprint: [foodId, quantity, foodId, quantity, ...]
+// Quantity is in "servings" (e.g., 1 = 1 serving as defined in DB)
+const MEAL_BLUEPRINTS = {
+  breakfast: [
+    { foods: ['oatmeal', 1.2, 'banana', 1, 'protein-shake', 0.5], label: 'Oatmeal + Banana + Whey' },
+    { foods: ['egg', 3, 'bread', 2, 'cheese', 1], label: 'Eggs on Toast + Cheese' },
+    { foods: ['greek-yogurt', 1.5, 'strawberries', 1.5, 'almonds', 0.3], label: 'Greek Yogurt + Berries + Almonds' },
+    { foods: ['milk', 1, 'oatmeal', 1, 'banana', 1], label: 'Overnight Oats' },
+    { foods: ['ful-mudammas', 1.5, 'baladi-bread', 1, 'tomato', 0.5], label: 'Ful + Baladi Bread' },
+  ],
+  lunch: [
+    { foods: ['chicken-breast', 1.5, 'rice', 1.2, 'broccoli', 1.5], label: 'Grilled Chicken + Rice + Broccoli' },
+    { foods: ['salmon', 1.2, 'sweet-potato', 1.5, 'spinach', 1], label: 'Salmon + Sweet Potato + Spinach' },
+    { foods: ['tuna-canned', 1.5, 'pasta', 1.2, 'tomato', 1], label: 'Tuna Pasta Salad' },
+    { foods: ['koshary', 1.5, 'molokhia', 1], label: 'Koshary + Molokhia' },
+    { foods: ['shish-taouk', 1.5, 'rice', 1, 'cucumber', 1], label: 'Shish Taouk + Rice' },
+  ],
+  dinner: [
+    { foods: ['steak', 1.2, 'boiled-potato', 1.5, 'broccoli', 1.5], label: 'Steak + Potato + Broccoli' },
+    { foods: ['white-fish', 1.5, 'basmati-rice', 1.2, 'zucchini', 1], label: 'Grilled Fish + Basmati + Zucchini' },
+    { foods: ['eggs', 3, 'baladi-bread', 1, 'avocado', 0.5], label: 'Avocado Egg Toast' },
+    { foods: ['macarona-bechamel', 1.5, 'salad', 1], label: 'Macarona Bechamel + Salad' },
+    { foods: ['kofta', 1.5, 'rice', 1, 'tomato', 1], label: 'Kofta + Rice' },
+  ],
+  snack: [
+    { foods: ['protein-shake', 1, 'banana', 1], label: 'Protein Shake + Banana' },
+    { foods: ['greek-yogurt', 1, 'blueberries', 1], label: 'Greek Yogurt + Berries' },
+    { foods: ['almonds', 0.5, 'apple', 1], label: 'Apple + Almonds' },
+    { foods: ['peanut-butter', 0.2, 'bread', 2], label: 'Peanut Butter Toast' },
+    { foods: ['cottage-cheese', 1, 'grapes', 1], label: 'Cottage Cheese + Grapes' },
+    { foods: ['dates-dry', 0.5, 'milk', 1], label: 'Dates + Milk' },
+  ]
+};
+
+function getBlueprintMacros(blueprint) {
+  const foods = blueprint.foods;
+  let total = { calories: 0, protein: 0, carbs: 0, fats: 0 };
+  for (let i = 0; i < foods.length; i += 2) {
+    const id = foods[i];
+    const qty = foods[i + 1];
+    const dbFood = FOOD_DATABASE.find(f => f.id === id);
+    if (dbFood) {
+      total.calories += dbFood.calories * qty;
+      total.protein  += (dbFood.protein || 0) * qty;
+      total.carbs    += (dbFood.carbs || 0) * qty;
+      total.fats     += (dbFood.fats || 0) * qty;
+    }
+  }
+  return total;
+}
+
+function generateDailyDietPlan(targetCal, targetP, targetC, targetF) {
+  // Allow ±15% flexibility
+  const margin = 0.15;
+  
+  // Shuffle arrays for variety
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  const mealTypes = ['breakfast', 'lunch', 'dinner'];
+  const snackBlueprints = shuffle(MEAL_BLUEPRINTS.snack);
+  
+  // Pick one random blueprint for each main meal
+  const selected = {
+    breakfast: shuffle(MEAL_BLUEPRINTS.breakfast)[0],
+    lunch: shuffle(MEAL_BLUEPRINTS.lunch)[0],
+    dinner: shuffle(MEAL_BLUEPRINTS.dinner)[0],
+    snack1: snackBlueprints[0] || MEAL_BLUEPRINTS.snack[0],
+    snack2: snackBlueprints[1] || MEAL_BLUEPRINTS.snack[0],
+  };
+
+  // Calculate total macros of the base plan
+  let total = { calories: 0, protein: 0, carbs: 0, fats: 0 };
+  const mealKeys = ['breakfast', 'lunch', 'dinner', 'snack1', 'snack2'];
+  const planMacros = {};
+  
+  mealKeys.forEach(key => {
+    const bp = selected[key];
+    const macros = getBlueprintMacros(bp);
+    planMacros[key] = macros;
+    total.calories += macros.calories;
+    total.protein  += macros.protein;
+    total.carbs    += macros.carbs;
+    total.fats     += macros.fats;
+  });
+
+  // Scale all meals proportionally to hit the calorie target
+  const scaleFactor = targetCal / total.calories;
+  
+  // Apply scaling to each meal's blueprint
+  const scaledPlan = {};
+  mealKeys.forEach(key => {
+    const bp = selected[key];
+    const baseMacros = planMacros[key];
+    // Scale the quantities in the blueprint
+    const scaledFoods = [];
+    for (let i = 0; i < bp.foods.length; i += 2) {
+      const id = bp.foods[i];
+      const qty = bp.foods[i + 1] * scaleFactor;
+      scaledFoods.push(id, Math.round(qty * 10) / 10); // keep 1 decimal
+    }
+    scaledPlan[key] = {
+      label: bp.label,
+      foods: scaledFoods,
+      macros: {
+        calories: Math.round(baseMacros.calories * scaleFactor),
+        protein:  Math.round(baseMacros.protein * scaleFactor * 10) / 10,
+        carbs:    Math.round(baseMacros.carbs * scaleFactor * 10) / 10,
+        fats:     Math.round(baseMacros.fats * scaleFactor * 10) / 10,
+      }
+    };
+  });
+
+  // Adjust slightly to match protein/fat/carb targets if possible (simplified)
+  // We'll rely on the fact that the blueprints are balanced.
+  return scaledPlan;
+}
+
+function generateWeeklyDietPlan() {
+  const profile = DB.get('calculatorProfile', null);
+  const goals = DB.get('calorieGoals', { calories: 2000, protein: 150, carbs: 200, fats: 55 });
+
+  if (!profile) {
+    toast('⚠️ Please save your profile in the Calculator tab first.');
+    navigate('calculator');
+    return;
+  }
+
+  const targetCal = goals.calories || 2000;
+  const targetP = goals.protein || 150;
+  const targetC = goals.carbs || 200;
+  const targetF = goals.fats || 55;
+
+  // Generate 7 days
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const weekPlan = days.map((day, idx) => {
+    // Add slight variation each day (±5%)
+    const variation = 0.95 + (Math.random() * 0.1);
+    const dayCal = Math.round(targetCal * variation);
+    const dayP = Math.round(targetP * variation);
+    const dayC = Math.round(targetC * variation);
+    const dayF = Math.round(targetF * variation);
+    
+    const meals = generateDailyDietPlan(dayCal, dayP, dayC, dayF);
+    return { day, meals, target: { calories: dayCal, protein: dayP, carbs: dayC, fats: dayF } };
+  });
+
+  DB.set('weeklyDietPlan', weekPlan);
+  renderDietPage(weekPlan);
+  toast('📋 Weekly diet plan generated!');
+   if (getAuthUser()) {
+    setTimeout(() => syncUserDataToCloud(), 500);}
+}
+
+function renderDietPage(plan) {
+  const container = document.getElementById('weekly-diet-grid');
+  const summary = document.getElementById('diet-profile-summary');
+  if (!container) return;
+
+  // If no plan, load from DB
+  if (!plan) {
+    plan = DB.get('weeklyDietPlan', null);
+  }
+
+  const profile = DB.get('calculatorProfile', null);
+  const goals = DB.get('calorieGoals', { calories: 2000, protein: 150, carbs: 200, fats: 55 });
+
+  // Update summary
+  if (summary) {
+    if (profile) {
+      summary.innerHTML = `
+        <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;">
+          <span style="font-size:13px;color:var(--text2);">
+            👤 ${profile.sex === 'male' ? 'Male' : 'Female'}, ${profile.age} yrs · ${profile.weight}kg · ${profile.height}cm
+          </span>
+          <span style="font-size:13px;color:var(--accent);">
+            🎯 ${goals.calories} kcal · ${goals.protein}g P · ${goals.carbs}g C · ${goals.fats}g F
+          </span>
+          <span style="font-size:12px;color:var(--text3);">${plan ? '✅ Plan ready' : '❌ No plan'}</span>
+        </div>
+      `;
+    } else {
+      summary.innerHTML = `<p class="muted-text">⚡ Go to <strong>Calculator</strong> to save your profile, then generate a diet plan.</p>`;
+    }
+  }
+
+  if (!plan || plan.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon">📋</span>
+        <p>No diet plan yet. Tap <strong>Generate</strong> above.</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Render each day
+  container.innerHTML = plan.map((day, dayIdx) => {
+    const meals = day.meals;
+    const mealKeys = ['breakfast', 'lunch', 'dinner', 'snack1', 'snack2'];
+    const mealLabels = { breakfast: '🌅 Breakfast', lunch: '☀️ Lunch', dinner: '🌙 Dinner', snack1: '🍎 Snack 1', snack2: '🍌 Snack 2' };
+    const mealClasses = { breakfast: 'breakfast', lunch: 'lunch', dinner: 'dinner', snack1: 'snack', snack2: 'snack' };
+
+    const mealBlocks = mealKeys.map(key => {
+      const meal = meals[key];
+      if (!meal) return '';
+      
+      // Build food name string
+      const foodNames = [];
+      for (let i = 0; i < meal.foods.length; i += 2) {
+        const id = meal.foods[i];
+        const qty = meal.foods[i + 1];
+        const dbFood = FOOD_DATABASE.find(f => f.id === id);
+        if (dbFood) {
+          const serving = dbFood.serving || 'serving';
+          foodNames.push(`${qty}× ${dbFood.name}`);
+        }
+      }
+
+      const m = meal.macros || { calories: 0, protein: 0, carbs: 0, fats: 0 };
+      return `
+        <div class="meal-block ${mealClasses[key]}">
+          <span class="meal-label">${mealLabels[key]}</span>
+          <span class="meal-foods">
+            ${foodNames.map(name => `<span class="food-item">${name}</span>`).join('')}
+          </span>
+          <span class="meal-macros">${m.calories} kcal · ${m.protein}g P · ${m.carbs}g C · ${m.fats}g F</span>
+        </div>
+      `;
+    }).join('');
+
+    // Calculate day totals
+    const dayTotal = { calories: 0, protein: 0, carbs: 0, fats: 0 };
+    mealKeys.forEach(key => {
+      const m = meals[key]?.macros || {};
+      dayTotal.calories += m.calories || 0;
+      dayTotal.protein  += m.protein || 0;
+      dayTotal.carbs    += m.carbs || 0;
+      dayTotal.fats     += m.fats || 0;
+    });
+
+    return `
+      <div class="day-diet-card">
+        <div class="day-diet-header">
+          <span class="day-diet-title">${day.day}</span>
+          <span class="day-diet-macros">
+            🔥 ${Math.round(dayTotal.calories)} kcal ·
+            💪 ${Math.round(dayTotal.protein)}g ·
+            🍚 ${Math.round(dayTotal.carbs)}g ·
+            🧈 ${Math.round(dayTotal.fats)}g
+          </span>
+        </div>
+        ${mealBlocks}
+        <div class="day-diet-actions">
+          <button class="btn btn-sm btn-primary" onclick="addDayToLog(${dayIdx})">➕ Add to Today</button>
+          <button class="btn btn-sm btn-ghost" onclick="regenerateDay(${dayIdx})">🔄 Regen Day</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function addDayToLog(dayIndex) {
+  const plan = DB.get('weeklyDietPlan', null);
+  if (!plan || !plan[dayIndex]) {
+    toast('Plan not found');
+    return;
+  }
+
+  const day = plan[dayIndex];
+  const meals = day.meals;
+  const mealKeys = ['breakfast', 'lunch', 'dinner', 'snack1', 'snack2'];
+  const foodLog = getData().foodLog;
+  const now = new Date().toISOString();
+
+  mealKeys.forEach(key => {
+    const meal = meals[key];
+    if (!meal) return;
+    for (let i = 0; i < meal.foods.length; i += 2) {
+      const id = meal.foods[i];
+      const qty = meal.foods[i + 1];
+      const dbFood = FOOD_DATABASE.find(f => f.id === id);
+      if (dbFood) {
+        foodLog.push({
+          id: 'food_' + Date.now() + '_' + Math.random(),
+          name: dbFood.name,
+          calories: dbFood.calories,
+          protein: dbFood.protein || 0,
+          carbs: dbFood.carbs || 0,
+          fats: dbFood.fats || 0,
+          serving: dbFood.serving || '1 serving',
+          quantity: qty,
+          date: now
+        });
+      }
+    }
+  });
+
+  DB.set('foodLog', foodLog);
+  renderCalorieTracker();
+  toast(`✅ Added ${day.day}'s meals to today's log!`);
+  if (getAuthUser()) syncUserDataToCloud();
+}
+
+function regenerateDay(dayIndex) {
+  const plan = DB.get('weeklyDietPlan', null);
+  if (!plan || !plan[dayIndex]) return;
+
+  const profile = DB.get('calculatorProfile', null);
+  const goals = DB.get('calorieGoals', { calories: 2000, protein: 150, carbs: 200, fats: 55 });
+  if (!profile) { toast('Profile missing'); return; }
+
+  const targetCal = goals.calories || 2000;
+  const targetP = goals.protein || 150;
+  const targetC = goals.carbs || 200;
+  const targetF = goals.fats || 55;
+
+  const variation = 0.95 + (Math.random() * 0.1);
+  const dayCal = Math.round(targetCal * variation);
+  const dayP = Math.round(targetP * variation);
+  const dayC = Math.round(targetC * variation);
+  const dayF = Math.round(targetF * variation);
+
+  const newMeals = generateDailyDietPlan(dayCal, dayP, dayC, dayF);
+  plan[dayIndex].meals = newMeals;
+  plan[dayIndex].target = { calories: dayCal, protein: dayP, carbs: dayC, fats: dayF };
+  
+  DB.set('weeklyDietPlan', plan);
+  renderDietPage(plan);
+  toast(`🔄 Regenerated ${plan[dayIndex].day}`);
+
+ if (getAuthUser()) {
+    setTimeout(() => syncUserDataToCloud(), 300);
+  }
+
+}
+
 // ─── State ────────────────────────────────────────────────
 let state = {
   currentPage: 'home',
@@ -1810,20 +2317,28 @@ function formatKg(weight) {
   return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, '');
 }
 
+let _cachedAllExercises = null;
 function getAllExercises() {
-  return [...EXERCISE_LIBRARY, ...(getData().customWorkouts || [])];
+  if (!_cachedAllExercises) {
+    _cachedAllExercises = [...EXERCISE_LIBRARY, ...(getData().customWorkouts || [])];
+  }
+  return _cachedAllExercises;
 }
+// Invalidate when custom workouts change:
+function invalidateExerciseCache() {
+  _cachedAllExercises = null;
+}
+// Call invalidateExerciseCache() after saving/deleting custom workouts.
 
 let autocompleteSelectedIndex = -1;
 
-function updateAutocomplete() {
+const updateAutocomplete = debounce(function() {
   const input = document.getElementById('exercise-search');
   const list = document.getElementById('autocomplete-list');
   const query = input.value.toLowerCase().trim();
 
   if (!query || query.length < 1) {
     list.style.display = 'none';
-    // Still show all exercises when search is empty
     filterExercises('');
     return;
   }
@@ -1832,16 +2347,14 @@ function updateAutocomplete() {
   const matches = allEx.filter(ex =>
     ex.name.toLowerCase().includes(query) ||
     (ex.muscle && ex.muscle.toLowerCase().includes(query))
-  ).slice(0, 10); // limit to 10 suggestions
+  ).slice(0, 8); // Reduced from 10 to 8
 
   if (matches.length === 0) {
     list.style.display = 'none';
-    // Still filter main list to show "no results"
     filterExercises(query);
     return;
   }
 
-  // Render dropdown
   list.innerHTML = matches.map((ex, idx) => `
     <div class="autocomplete-item" data-index="${idx}" data-id="${ex.id}">
       <span class="item-name">${highlightMatch(ex.name, query)}</span>
@@ -1852,7 +2365,6 @@ function updateAutocomplete() {
   list.style.display = 'block';
   autocompleteSelectedIndex = -1;
 
-  // Attach click listeners to each item
   list.querySelectorAll('.autocomplete-item').forEach(el => {
     el.addEventListener('click', function() {
       const id = this.dataset.id;
@@ -1861,15 +2373,14 @@ function updateAutocomplete() {
       if (selected) {
         input.value = selected.name;
         list.style.display = 'none';
-        filterExercises(selected.name); // filter main list to this exercise
+        filterExercises(selected.name);
         input.focus();
       }
     });
   });
 
-  // Also filter the main list as they type (showing matches live)
   filterExercises(query);
-}
+}, 180);
 
 // Helper to bold matched text
 function highlightMatch(text, query) {
@@ -1888,12 +2399,91 @@ function filterExercises(query) {
     query = input ? input.value.toLowerCase().trim() : '';
   }
 
+const EXERCISES_PER_PAGE = 30;
+let currentExercisePage = 1;
+let allFilteredExercises = [];
+
+function loadMoreExercises() {
+  currentExercisePage++;
+  renderExercisePage();
+}
+
+function renderExercisePage() {
+  const start = 0;
+  const end = currentExercisePage * EXERCISES_PER_PAGE;
+  const visible = allFilteredExercises.slice(start, end);
+  const total = allFilteredExercises.length;
+  const hasMore = end < total;
+
+  const el = document.getElementById('exercise-list');
+  if (!el) return;
+
+  const groups = {};
+  visible.forEach(e => {
+    if (!groups[e.muscle]) groups[e.muscle] = [];
+    groups[e.muscle].push(e);
+  });
+
+  const { prs } = getData();
+  let html = Object.entries(groups).map(([muscle, exs]) => `
+    <div class="exercise-group">
+      <div class="exercise-group-title">${MUSCLE_EMOJIS[muscle] || ''} ${muscle}</div>
+      ${exs.map(e => `
+        <div class="exercise-card">
+          <div class="exercise-info" style="flex:1">
+            <div class="exercise-name">${escHtml(e.name)}</div>
+            <div class="exercise-meta">${e.isCardio ? 'Cardio' : `${e.sets} sets × ${e.reps} reps · ${e.rest}s rest`}</div>
+            ${prs[e.id] ? `<div class="exercise-pr">PR: ${prs[e.id].weight}kg</div>` : ''}
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); addToWorkoutQueue('${e.id}', '${escHtml(e.name)}')" style="padding:6px 12px">+ Queue</button>
+            <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); startSessionForExercise('${e.id}')" style="padding:6px 12px">▶ Start</button>
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+
+  if (hasMore) {
+    html += `<div style="text-align:center;padding:12px;">
+      <button class="btn btn-sm btn-ghost" onclick="loadMoreExercises()">Load 30 more (${total - end} remaining)</button>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// Modify filterExercises to use pagination
+const filterExercises = debounce(function(query) {
+  if (query === undefined || query === null) {
+    const input = document.getElementById('exercise-search');
+    query = input ? input.value.toLowerCase().trim() : '';
+  }
+
   const allEx = getAllExercises();
   let exercises = allEx;
 
   if (state.muscleFilter !== 'All') {
     exercises = exercises.filter(e => e.muscle === state.muscleFilter);
   }
+
+  if (query) {
+    exercises = exercises.filter(e =>
+      e.name.toLowerCase().includes(query) ||
+      (e.muscle && e.muscle.toLowerCase().includes(query))
+    );
+  }
+
+  allFilteredExercises = exercises;
+  currentExercisePage = 1;
+  renderExercisePage();
+}, 200);
+  
+  const allEx = getAllExercises();
+  let exercises = allEx;
+
+  if (state.muscleFilter !== 'All') {
+    exercises = exercises.filter(e => e.muscle === state.muscleFilter);
+  }
+
 
   if (query) {
     exercises = exercises.filter(e =>
@@ -1996,6 +2586,31 @@ if (clearBtn && input) {
     clearBtn.style.display = 'none';
   });
 }
+
+// ══════════════════════════════════════════
+// ONBOARDING TOUR
+// ══════════════════════════════════════════
+
+
+
+// ─── Spotlight pulse animation ───
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `
+  @keyframes spotlightPulse {
+    0%, 100% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.75), 0 0 0 2px var(--accent); }
+    50% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.75), 0 0 0 4px var(--accent), 0 0 20px rgba(0,229,160,0.3); }
+  }
+`;
+document.head.appendChild(styleSheet);
+
+// ─── Auto-start on load ──────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Ensure other inits run first, then start tour
+  setTimeout(() => {
+    TourManager.init();
+  }, 800);
+});
+
 });
 
 
@@ -2052,6 +2667,52 @@ function getData() {
     calorieGoals: DB.get('calorieGoals', { calories: 2000, protein: 150, carbs: 200, fats: 55 }),
     customFoods: DB.get('customFoods', [])
   };
+}
+
+// ─── Gymbros (Friends) ────────────────────────────────
+
+function getGymbros() {
+  return DB.get('gymbros', []);
+}
+
+function saveGymbros(list) {
+  DB.set('gymbros', list);
+}
+
+function addGymbro() {
+  const input = document.getElementById('gymbro-username-input');
+  if (input) {
+    const username = input.value.trim();
+    if (username) {
+      handleAddFriend(username);
+    } else {
+      toast('Please enter a username');
+    }
+  }
+}
+
+function removeGymbro(username) {
+  // Handled via Supabase database relations
+}
+
+function viewGymbroProfile(username) {
+  const nameEl = document.getElementById('gymbro-profile-name');
+  const bodyEl = document.getElementById('gymbro-profile-body');
+  if (nameEl) nameEl.textContent = `👤 ${username}`;
+  if (bodyEl) {
+    bodyEl.innerHTML = `
+      <div style="text-align:center;padding:20px 0;">
+        <div style="font-size:48px;">🏋️</div>
+        <h4 style="margin:12px 0 4px;">${username}</h4>
+        <p class="muted-text">Active Gymbro</p>
+      </div>
+    `;
+  }
+  openModal('gymbro-profile-modal');
+}
+
+function renderGymbros() {
+  renderGymbrosSocial();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2607,6 +3268,8 @@ function getWeeklySchedule() {
 
 function saveWeeklySchedule(schedule) {
   DB.set('weeklySchedule', schedule);
+    syncUserDataToCloud();
+
 }
 
 function renderWeeklySchedule() {
@@ -2637,6 +3300,8 @@ function renderWeeklySchedule() {
       </div>
     `;
   }).join('');
+    syncUserDataToCloud();
+
 }
 
 function editScheduleDay(day) {
@@ -2654,6 +3319,8 @@ function editScheduleDay(day) {
   renderAvailableExercises('');
   
   openModal('schedule-modal');
+    syncUserDataToCloud();
+
 }
 
 function renderScheduleWorkoutList(workouts) {
@@ -3048,27 +3715,119 @@ function applySplitTemplate(template) {
   toast(`${template.replace('-', ' ').toUpperCase()} template applied!`);
 }
 
+function copyScheduleToClipboard() {
+  const schedule = getWeeklySchedule();
+  const dayEmojis = { Monday: '💪', Tuesday: '🔥', Wednesday: '⚡', Thursday: '🏋️', Friday: '💥', Saturday: '🌟', Sunday: '😴' };
+
+  const lines = ['📅 My Weekly Workout Schedule', '═'.repeat(32), ''];
+
+  DAYS_OF_WEEK.forEach(day => {
+    const dayData = schedule.days[day] || { name: '', workouts: [] };
+    const emoji = dayEmojis[day] || '🗓';
+    const label = dayData.name ? `${day} — ${dayData.name}` : day;
+    lines.push(`${emoji} ${label}`);
+
+    if (dayData.workouts && dayData.workouts.length > 0) {
+      dayData.workouts.forEach((w, i) => {
+        const setsReps = w.isCardio
+          ? `${w.duration || w.sets || 1} sets`
+          : `${w.sets || 3} sets × ${w.reps || 10} reps`;
+        lines.push(`   ${i + 1}. ${w.name} — ${setsReps} (${w.rest || 60}s rest)`);
+        if (w.notes) lines.push(`      📝 ${w.notes}`);
+      });
+    } else {
+      lines.push('   Rest Day 😴');
+    }
+    lines.push('');
+  });
+
+  lines.push('─'.repeat(32));
+  lines.push('Made with Jim Buddy 💪');
+
+  const text = lines.join('\n');
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      toast('Schedule copied to clipboard! 📋');
+      const btn = document.getElementById('copy-schedule-btn');
+      if (btn) {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✅ Copied!';
+        btn.disabled = true;
+        setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 2000);
+      }
+    }).catch(() => {
+      toast('Could not copy. Try again!', 'error');
+    });
+  } else {
+    // Fallback for older browsers
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      toast('Schedule copied to clipboard! 📋');
+    } catch {
+      toast('Copy not supported on this browser.', 'error');
+    }
+  }
+}
+
 // ─── Navigation ─────────────────────────────────────────
 function navigate(page) {
-    SoundManager.tap();
+  SoundManager.tap();
 
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  document.querySelector(`.nav-btn[data-page="${page}"]`)?.classList.add('active');
-  state.currentPage = page;
-  if (page === 'home') renderDashboard();
-  if (page === 'workouts') renderWorkouts();
-  if (page === 'progress') renderProgress();
-  if (page === 'goals') renderGoals();
-  if (page === 'water') renderWater();
-  if (page === 'schedule') renderWeeklySchedule();
-  if (page === 'calorie') renderCalorieTracker();
-  if (page === 'calculator') { 
-  renderCalorieTracker();
-  displaySavedProfile();
-  loadSavedProfile();
-}
+  // Use requestAnimationFrame to batch DOM updates
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+    let targetPageId = 'page-' + page;
+    let targetBtnPage = page;
+
+    if (page === 'calculator') {
+      targetPageId = 'page-calorie';
+      targetBtnPage = 'calorie';
+    }
+
+    const targetPage = document.getElementById(targetPageId);
+    if (targetPage) targetPage.classList.add('active');
+
+    const targetBtn = document.querySelector(`.nav-btn[data-page="${targetBtnPage}"]`);
+    if (targetBtn) targetBtn.classList.add('active');
+
+    state.currentPage = page;
+
+    // Lazy‑render only if needed
+    if (page === 'home') renderDashboard();
+    if (page === 'workouts') renderWorkouts();
+    if (page === 'progress') renderProgress();
+    if (page === 'goals') renderGoals();
+    if (page === 'water') renderWater();
+    if (page === 'schedule') renderWeeklySchedule();
+    if (page === 'calorie') {
+      renderCalorieTracker();
+      const scrollContainer = document.querySelector('#page-calorie .page-scroll');
+      if (scrollContainer) scrollContainer.scrollTop = 0;
+    }
+    if (page === 'calculator') {
+      renderCalorieTracker();
+      displaySavedProfile();
+      loadSavedProfile();
+      setTimeout(() => {
+        const targetEl = document.getElementById('calorie-calculator-section');
+        const scrollContainer = document.querySelector('#page-calorie .page-scroll');
+        if (scrollContainer && targetEl) {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 50);
+    }
+    if (page === 'diet') renderDietPage();
+    if (page === 'gymbros') renderGymbros();
+  });
 }
 
 // ─── Dashboard ───────────────────────────────────────────
@@ -3759,6 +4518,9 @@ function renderChart() {
   if (!exId) return;
 
   const dataPoints = [];
+
+  
+
   sessions.forEach(s => {
     (s.exercises || []).forEach(e => {
       if ((e.id || e.name) === exId && !e.isCardio) {
@@ -3808,9 +4570,12 @@ function renderChart() {
         borderWidth: 2,
       }]
     },
-    options: {
+    options: {  
       responsive: true,
       maintainAspectRatio: false,
+      animation: {
+    duration: isLowEnd() ? 0 : 500 // Disable animations on low‑end
+  },
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -3837,6 +4602,9 @@ function renderChart() {
       }
     }
   });
+
+
+  
 }
 
 // ─── Body Weight Chart ────────────────────────────────────
@@ -4114,7 +4882,9 @@ function saveGoal() {
   DB.set('weeklyGoals', goals);
   closeModal('goal-modal');
   toast('Goal set!');
-  renderWeeklyGoals();
+  renderWeeklyGoals();      
+  syncUserDataToCloud();
+
 }
 
 function renderWeeklyGoals() {
@@ -4154,6 +4924,8 @@ function deleteGoal(id) {
   DB.set('weeklyGoals', getData().weeklyGoals.filter(g => g.id !== id));
   toast('Goal removed');
   renderWeeklyGoals();
+    syncUserDataToCloud();
+
 }
 
 // Weight Loss Goal
@@ -4166,6 +4938,8 @@ function saveWeightLossGoal() {
   DB.set('weightLossGoal', { currentWeight: current, targetWeight: target, targetDate: date, createdAt: new Date().toISOString() });
   toast('Weight loss goal saved!');
   renderWeightLossGoal();
+    syncUserDataToCloud();
+
 }
 
 function logWeight() {
@@ -4179,6 +4953,8 @@ function logWeight() {
   toast('Weight logged!');
   renderWeightLossGoal();
   renderDashboard();
+    syncUserDataToCloud();
+
 }
 
 function renderWeightLossGoal() {
@@ -4244,6 +5020,8 @@ function saveCardioGoal() {
   DB.set('cardioGoal', { minutesPerWeek: minutes, sessionsPerWeek: sessions, createdAt: new Date().toISOString() });
   toast('Cardio goal saved!');
   renderCardioGoals();
+    syncUserDataToCloud();
+
 }
 
 function logCardio() {
@@ -4371,6 +5149,8 @@ function addWater(ml) {
   toast(`+${ml}ml 💧`);
   renderWater();
   updateDashWater();
+    syncUserDataToCloud();
+
 }
 
 function addWaterCustom() {
@@ -4379,6 +5159,8 @@ function addWaterCustom() {
   const customInput = document.getElementById('water-custom-amount');
   if (customInput) customInput.value = '';
   addWater(val);
+    syncUserDataToCloud();
+
 }
 
 function setWaterGoal() {
@@ -4398,6 +5180,8 @@ function resetWater() {
   DB.set('waterLog', log);
   toast('Water reset');
   renderWater();
+    syncUserDataToCloud();
+
 }
 
 function updateDashWater() {
@@ -4588,6 +5372,8 @@ function saveCalculatorProfile() {
   
   displaySavedProfile();
   toast('Profile saved!');
+    syncUserDataToCloud();
+
 }
 
 function displaySavedProfile() {
@@ -4807,6 +5593,8 @@ function renderWorkoutQueue() {
       </div>
     `;
   }).join('');
+
+
 }
 
 // Open modal to log sets for a queued exercise
@@ -5512,18 +6300,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // ══════════════════════════════════════════
 
   // Throttle scroll events (reduce event firing)
-  let ticking = false;
   const scrollContainer = document.querySelector('.page-scroll');
   if (scrollContainer) {
-    scrollContainer.addEventListener('scroll', function() {
-      if (!ticking) {
-        requestAnimationFrame(function() {
-          // Your scroll logic here if needed
-          ticking = false;
-        });
-        ticking = true;
-      }
-    });
+    scrollContainer.addEventListener('scroll', throttle(() => {
+      // No heavy work – just let the browser breathe
+    }, 200), { passive: true });
   }
 
   // Debounce input events
@@ -5555,6 +6336,11 @@ document.addEventListener('DOMContentLoaded', () => {
   window.renderDashboard = function() {
     requestAnimationFrame(() => originalRenderDashboard());
   };
+
+// Render gymbros if that page is active
+if (document.getElementById('page-gymbros').classList.contains('active')) {
+  renderGymbros();
+}
 
   // Throttle toast notifications (reduce UI thrashing)
   let toastQueue = [];
@@ -5799,7 +6585,9 @@ function saveCurrentProfileData(profileId) {
       calorieGoals:   DB.get('calorieGoals', { calories: 2000, protein: 150, carbs: 200, fats: 55 }),
       customFoods:    DB.get('customFoods', []),
       customWorkouts: DB.get('customWorkouts', []),
-      weeklyGoals:    DB.get('weeklyGoals', [])
+      weeklyGoals:    DB.get('weeklyGoals', []),
+            weeklyDietPlan: DB.get('weeklyDietPlan', null)
+
     }
   };
 
@@ -5831,6 +6619,8 @@ function loadProfileData(profileId) {
     DB.set('customFoods',    data.customFoods    || []);
     DB.set('customWorkouts', data.customWorkouts || []);
     DB.set('weeklyGoals',    data.weeklyGoals    || []);
+        DB.set('weeklyDietPlan', data.weeklyDietPlan || null);
+
   }
 }
 
@@ -6516,6 +7306,26 @@ const SUPABASE_URL  = 'https://ntgjqeixzmajkefkrhhy.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50Z2pxZWl4em1hamtlZmtyaGh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NTg3MDAsImV4cCI6MjA5NzEzNDcwMH0.RZxAsWw8bzQJ7Mwq5Mvqtk3jNUT6rEi3Ah9ZEG7rLM0';
 const AUTH_SESSION_KEY = 'jimbuddy_sb_session';
 
+async function isUsernameTaken(username) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/leaderboard?username=eq.${encodeURIComponent(username)}&select=username`,
+      {
+        headers: {
+          'apikey': SUPABASE_ANON,
+          'Authorization': `Bearer ${SUPABASE_ANON}`
+        }
+      }
+    );
+    if (!res.ok) return false; // assume not taken if error
+    const data = await res.json();
+    return data.length > 0;
+  } catch {
+    return false; // fallback: let sign-up proceed (network issue)
+  }
+}
+
+
 // ─── Cloud Sync Functions ───────────────────────────────────────────
 
 async function syncUserDataToCloud() {
@@ -6537,7 +7347,8 @@ async function syncUserDataToCloud() {
     calorieGoals: DB.get('calorieGoals', { calories: 2000, protein: 150, carbs: 200, fats: 55 }),
     customFoods: DB.get('customFoods', []),
     customWorkouts: DB.get('customWorkouts', []),
-    weeklyGoals: DB.get('weeklyGoals', [])
+    weeklyGoals: DB.get('weeklyGoals', []),
+    weeklyDietPlan: DB.get('weeklyDietPlan', null)
   };
 
   const session = getAuthSession();
@@ -6610,6 +7421,8 @@ async function loadUserDataFromCloud() {
         DB.set('customFoods', data.customFoods || []);
         DB.set('customWorkouts', data.customWorkouts || []);
         DB.set('weeklyGoals', data.weeklyGoals || []);
+            DB.set('weeklyDietPlan', data.weeklyDietPlan || null);
+
         
         console.log('[Sync] Data loaded from cloud ✅');
         return true;
@@ -6835,17 +7648,34 @@ async function authSignUp() {
   const email    = document.getElementById('auth-signup-email')?.value.trim();
   const password = document.getElementById('auth-signup-password')?.value;
 
-  if (!username || username.length < 2) { showAuthMessage('Please enter a username (at least 2 characters).'); return; }
-  if (!isValidEmail(email))              { showAuthMessage('Please enter a valid email address.'); return; }
-  if (!password || password.length < 6)  { showAuthMessage('Password must be at least 6 characters.'); return; }
+  // ─── Basic validation ──────────────────────────────
+  if (!username || username.length < 2) {
+    showAuthMessage('Please enter a username (at least 2 characters).');
+    return;
+  }
+  if (!isValidEmail(email)) {
+    showAuthMessage('Please enter a valid email address.');
+    return;
+  }
+  if (!password || password.length < 6) {
+    showAuthMessage('Password must be at least 6 characters.');
+    return;
+  }
 
+  // ─── NEW: Check if username is already taken ──────
+  showAuthMessage('Checking username availability...', 'loading');
+  const taken = await isUsernameTaken(username);
+  if (taken) {
+    showAuthMessage('❌ Username "' + username + '" is already taken. Please choose another.');
+    return;
+  }
+
+  // ─── Proceed with sign‑up ──────────────────────────
   showAuthMessage('Creating account…', 'loading');
-
   try {
     const data = await sbSignUp(email, password, username);
 
     if (data.error) {
-      // Common Supabase errors → friendly messages
       const msg = data.error.message || data.msg || '';
       if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
         showAuthMessage('An account with this email already exists. Please log in.');
@@ -6855,21 +7685,31 @@ async function authSignUp() {
       return;
     }
 
-    // Supabase may return a session immediately (email confirm disabled) or just a user
     const session = data.session || null;
     const user    = data.user || (session && session.user) || null;
     const uname   = user?.user_metadata?.username || username;
     const uemail  = user?.email || email;
 
-    if (session) setAuthSession({ ...session, user: { ...session.user, user_metadata: { username: uname } } });
+    if (session) {
+      setAuthSession({ ...session, user: { ...session.user, user_metadata: { username: uname } } });
+    }
 
     activateAccountProfile(uname, uemail);
 
+    // ─── NEW: Sync leaderboard immediately ──────────
+    if (getAuthUser()) {
+      setTimeout(() => syncLeaderboard(), 1500);
+    }
+
     if (session) {
       showAuthMessage('Account created! Welcome, ' + uname + ' 🎉', 'success');
-      setTimeout(() => { renderAuthState(); closeModal('profile-modal'); toast('🎉 Welcome, ' + uname + '!'); }, 900);
+      setTimeout(() => {
+        renderAuthState();
+        closeModal('profile-modal');
+        toast('🎉 Welcome, ' + uname + '!');
+      }, 900);
     } else {
-      // Email confirmation required — switch to login tab and pre-fill the email
+      // Email confirmation required
       showAuthMessage('✅ Account created! Check your email to confirm, then log in below.', 'success');
       setTimeout(() => {
         const signupPassword = document.getElementById('auth-signup-password')?.value || '';
@@ -7008,6 +7848,11 @@ function renderAuthState() {
     if (nameEl)   nameEl.textContent   = uname;
     if (emailEl)  emailEl.textContent  = user.email || '';
     if (avatarEl) avatarEl.textContent = getAvatarForUsername(uname);
+    
+    // Start social status updates
+    if (typeof startStatusHeartbeat === 'function') {
+      startStatusHeartbeat();
+    }
   } else {
     authCard.style.display     = '';
     loggedinCard.style.display = 'none';
@@ -7019,6 +7864,11 @@ function renderAuthState() {
     });
     document.querySelectorAll('.auth-eye-btn').forEach(btn => { btn.textContent = '👁'; });
     document.querySelectorAll('.auth-pw-input').forEach(inp => { inp.type = 'password'; });
+    
+    // Stop social status updates
+    if (typeof stopStatusHeartbeat === 'function') {
+      stopStatusHeartbeat();
+    }
   }
 }
 
@@ -7078,6 +7928,168 @@ window.authLogout         = authLogout;
 window.renderAuthState    = renderAuthState;
 
 // ─── Init ─────────────────────────────────────────────────
+
+// ══════════════════════════════════════════
+// ONBOARDING TOUR
+// ══════════════════════════════════════════
+
+const TourManager = {
+  steps: [],
+  currentStep: 0,
+  isRunning: false,
+
+  init() {
+    const hasOnboarded = DB.get('hasOnboarded', false);
+    if (hasOnboarded) return;
+
+    const profiles = DB.get('profiles', []);
+    const calorieGoals = DB.get('calorieGoals', null);
+    const schedule = DB.get('weeklySchedule', null);
+
+    if (profiles.length > 0 && calorieGoals && schedule?.days) {
+      const hasExercises = Object.values(schedule.days).some(d => d.workouts?.length > 0);
+      if (hasExercises) {
+        DB.set('hasOnboarded', true);
+        return;
+      }
+    }
+
+    this.steps = [
+      {
+        target: '#profile-badge-btn',
+        title: '👤 Create Your Profile',
+        desc: 'Tap the profile icon to create your first profile. This stores all your progress, PRs, and history.',
+        arrow: 'bottom'
+      },
+      {
+        target: '#settings-btn',
+        title: '⚙️ Set Your Goals',
+        desc: 'Open Settings, then go to "Calorie & Weight Calculator". Enter your age, weight, height, and activity level to get your daily targets.',
+        arrow: 'bottom'
+      },
+      {
+        target: '[data-page="water"]',
+        title: '💧 Set Water Goal',
+        desc: 'Navigate to the Water tab and set your daily hydration goal (default is 2000ml). Stay hydrated!',
+        arrow: 'top'
+      },
+      {
+        target: '[data-page="schedule"]',
+        title: '📅 Plan Your Week',
+        desc: 'Go to Schedule and tap a day to add exercises. Or use a Quick Template (Push/Pull/Legs, Upper/Lower, etc.) to get started instantly.',
+        arrow: 'top'
+      }
+    ];
+
+    this.isRunning = true;
+    this.currentStep = 0;
+    this.showStep(0);
+  },
+
+  showStep(index) {
+    const step = this.steps[index];
+    if (!step) { this.finish(); return; }
+
+    const overlay = document.getElementById('tour-overlay');
+    const spotlight = document.getElementById('tour-spotlight');
+    const tooltip = document.getElementById('tour-tooltip');
+    const counter = document.getElementById('tour-step-counter');
+    const title = document.getElementById('tour-title');
+    const desc = document.getElementById('tour-description');
+    const nextBtn = document.getElementById('tour-next-btn');
+    const skipBtn = document.getElementById('tour-skip-btn');
+
+    overlay.style.display = 'block';
+    counter.textContent = `${index + 1} / ${this.steps.length}`;
+    title.textContent = step.title;
+    desc.textContent = step.desc;
+    nextBtn.textContent = index === this.steps.length - 1 ? '🎉 Finish' : 'Next →';
+
+    const target = document.querySelector(step.target);
+    if (!target) {
+      spotlight.style.display = 'none';
+      tooltip.style.top = '50%';
+      tooltip.style.left = '50%';
+      tooltip.style.transform = 'translate(-50%, -50%)';
+      tooltip.dataset.arrow = 'top';
+      return;
+    }
+
+    const rect = target.getBoundingClientRect();
+    const padding = 12;
+    spotlight.style.display = 'block';
+    spotlight.style.top = (rect.top - padding) + 'px';
+    spotlight.style.left = (rect.left - padding) + 'px';
+    spotlight.style.width = (rect.width + padding * 2) + 'px';
+    spotlight.style.height = (rect.height + padding * 2) + 'px';
+
+    let left, top, arrow;
+    if (step.arrow === 'bottom') {
+      top = rect.bottom + 16;
+      left = rect.left + rect.width / 2 - 170;
+      arrow = 'top';
+      if (top + 220 > window.innerHeight - 20) {
+        top = rect.top - 220 - 16;
+        arrow = 'bottom';
+      }
+      if (left < 10) left = 10;
+      if (left + 340 > window.innerWidth - 10) left = window.innerWidth - 340 - 10;
+    } else {
+      top = rect.top - 220 - 16;
+      arrow = 'bottom';
+      if (top < 20) {
+        top = rect.bottom + 16;
+        arrow = 'top';
+      }
+      left = rect.left + rect.width / 2 - 170;
+      if (left < 10) left = 10;
+      if (left + 340 > window.innerWidth - 10) left = window.innerWidth - 340 - 10;
+    }
+
+    tooltip.style.top = top + 'px';
+    tooltip.style.left = left + 'px';
+    tooltip.dataset.arrow = arrow;
+
+    const newNext = nextBtn.cloneNode(true);
+    nextBtn.parentNode.replaceChild(newNext, nextBtn);
+    const newSkip = skipBtn.cloneNode(true);
+    skipBtn.parentNode.replaceChild(newSkip, skipBtn);
+
+    newNext.addEventListener('click', () => {
+      if (index === this.steps.length - 1) this.finish();
+      else { this.currentStep++; this.showStep(this.currentStep); }
+    });
+    newSkip.addEventListener('click', () => this.finish());
+
+    spotlight.style.animation = 'none';
+    spotlight.offsetHeight;
+    spotlight.style.animation = 'spotlightPulse 2s ease-in-out infinite';
+  },
+
+  finish() {
+    document.getElementById('tour-overlay').style.display = 'none';
+    document.getElementById('tour-spotlight').style.display = 'none';
+    this.isRunning = false;
+    DB.set('hasOnboarded', true);
+    toast('🎉 You\'re all set! Welcome to Jim Buddy.');
+  }
+};
+
+// Add the pulse animation
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `
+  @keyframes spotlightPulse {
+    0%, 100% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.75), 0 0 0 2px var(--accent); }
+    50% { box-shadow: 0 0 0 9999px rgba(0,0,0,0.75), 0 0 0 4px var(--accent), 0 0 20px rgba(0,229,160,0.3); }
+  }
+`;
+document.head.appendChild(styleSheet);
+
+// Auto‑start after page loads
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => TourManager.init(), 800);
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   renderAuthState();
 });
@@ -7161,7 +8173,7 @@ function buildMyStats() {
     pr_count:      prCount,
     total_volume:  Math.round(totalVolume),
     top_pr_name:   topPrName || '—',
-    top_pr_weight: topPrWeight,
+    top_pr_weight: Math.round(parseFloat(topPrWeight) || 0),
     updated_at:    new Date().toISOString()
   };
 }
@@ -7706,6 +8718,610 @@ async function manualSync() {
 }
 window.manualSync = manualSync;
 
+function resetUserData() {
+  if (!confirm('⚠️ This will delete ALL your progress data (sessions, PRs, logs, custom exercises). Your settings and account will stay.\n\nContinue?')) return;
+  if (!confirm('Are you absolutely sure? Type "RESET" to confirm.')) return;
+  const confirmation = prompt('Type "RESET" to confirm:');
+  if (confirmation !==  'RESET') { toast('Cancelled'); return; }
+
+  // Reset all tracking data
+  DB.set('sessions', []);
+  DB.set('prs', {});
+  DB.set('weightLog', []);
+  DB.set('weightLossGoal', null);
+  DB.set('cardioLog', []);
+  DB.set('cardioGoal', null);
+  DB.set('waterLog', []);
+  DB.set('foodLog', []);
+  DB.set('weeklyGoals', []);
+  DB.set('weeklyDietPlan', null);
+  DB.set('customWorkouts', []);
+  DB.set('customFoods', []);
+  DB.set('workoutQueue', []);
+  DB.set('lastHydrationReminder', null); // reset reminder state
+
+  // Also update the current profile's snapshot so switching profiles works correctly
+  const currentId = DB.get('currentProfileId');
+  if (currentId) {
+    let profilesData = DB.get('profilesData', {});
+    if (profilesData[currentId]) {
+      profilesData[currentId].data.sessions = [];
+      profilesData[currentId].data.prs = {};
+      profilesData[currentId].data.weightLog = [];
+      profilesData[currentId].data.weightLossGoal = null;
+      profilesData[currentId].data.cardioLog = [];
+      profilesData[currentId].data.cardioGoal = null;
+      profilesData[currentId].data.waterLog = [];
+      profilesData[currentId].data.foodLog = [];
+      profilesData[currentId].data.weeklyGoals = [];
+      profilesData[currentId].data.weeklyDietPlan = null;
+      profilesData[currentId].data.customWorkouts = [];
+      profilesData[currentId].data.customFoods = [];
+      profilesData[currentId].savedAt = new Date().toISOString();
+      DB.set('profilesData', profilesData);
+    }
+  }
+
+  // Invalidate exercise cache
+  if (window.invalidateExerciseCache) window.invalidateExerciseCache();
+
+  toast('✅ All progress data has been reset!');
+  // Refresh UI
+  renderDashboard();
+  renderWorkouts();
+  renderProgress();
+  renderWeeklySchedule();
+  renderCalorieTracker();
+  renderWater();
+  renderGoals();
+  renderPRLists();
+  loadWorkoutQueue();
+  // Maybe show a welcome back state
+    syncUserDataToCloud();
+
+}
+window.resetUserData = resetUserData;
+
+// ─── Gymbro Social Page & Real-time Chat Implementation ───
+
+// Active social state variables
+let activeChatId = null;
+let activeChatFriendId = null;
+let activeChatSubscription = null;
+let activeFriendStatusSubscription = null;
+let gymbrosListenersSet = false;
+let statusHeartbeatInterval = null;
+
+// Initial navigation and render wrapper
+async function renderGymbrosSocial() {
+  const currentUser = getAuthUser();
+  const friendsListContainer = document.getElementById('gymbros-friends-list');
+  const requestsListContainer = document.getElementById('gymbro-requests-list');
+  const searchResultsContainer = document.getElementById('gymbro-search-results');
+  const reqBadge = document.getElementById('request-count-badge');
+  const friendBadge = document.getElementById('friend-count-badge');
+  
+  if (!currentUser) {
+    if (friendsListContainer) {
+      friendsListContainer.innerHTML = `
+        <div class="empty-state">
+          <span class="empty-icon">🤝</span>
+          <p>Sign in to connect with other Gymbros!</p>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="openProfileModal()">Sign In / Sign Up</button>
+        </div>
+      `;
+    }
+    if (requestsListContainer) {
+      requestsListContainer.innerHTML = '<p class="muted-text">Please log in to view requests.</p>';
+    }
+    if (searchResultsContainer) searchResultsContainer.style.display = 'none';
+    if (reqBadge) reqBadge.style.display = 'none';
+    if (friendBadge) friendBadge.textContent = '0';
+    return;
+  }
+
+  // Setup event handlers once
+  setupGymbrosEventListeners();
+
+  // Pull fresh lists concurrently
+  await Promise.all([
+    loadAndRenderFriendRequests(),
+    loadAndRenderFriendsList()
+  ]);
+}
+window.renderGymbrosSocial = renderGymbrosSocial;
+
+function setupGymbrosEventListeners() {
+  if (gymbrosListenersSet) return;
+
+  const searchBtn = document.getElementById('gymbro-search-btn');
+  const searchInput = document.getElementById('gymbro-search-input');
+  const chatSendBtn = document.getElementById('chat-send-btn');
+  const chatMessageInput = document.getElementById('chat-message-input');
+
+  if (searchBtn) {
+    searchBtn.addEventListener('click', performGymbroSearch);
+  }
+  if (searchInput) {
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') performGymbroSearch();
+    });
+  }
+
+  if (chatSendBtn) {
+    chatSendBtn.addEventListener('click', handleSendChatMessage);
+  }
+  if (chatMessageInput) {
+    chatMessageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleSendChatMessage();
+    });
+  }
+
+  gymbrosListenersSet = true;
+}
+
+// User search
+async function performGymbroSearch() {
+  const input = document.getElementById('gymbro-search-input');
+  if (!input) return;
+
+  const query = input.value.trim();
+  if (!query) {
+    toast('Please enter a username to search');
+    return;
+  }
+
+  const resultsContainer = document.getElementById('gymbro-search-results');
+  if (!resultsContainer) return;
+
+  resultsContainer.style.display = 'block';
+  resultsContainer.innerHTML = '<p class="muted-text">🔍 Searching...</p>';
+
+  const users = await searchUsers(query);
+  if (!users || users.length === 0) {
+    resultsContainer.innerHTML = '<p class="muted-text">❌ No users found.</p>';
+    return;
+  }
+
+  resultsContainer.innerHTML = users.map(user => `
+    <div class="gymbro-search-item">
+      <div class="gymbro-search-item-info">
+        <div class="gymbro-search-item-avatar">${escHtml(user.avatar || '👤')}</div>
+        <div>
+          <div class="gymbro-search-item-name">${escHtml(user.username)}</div>
+          <div class="gymbro-search-item-streak">🔥 ${user.streak || 0} day streak</div>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-primary" onclick="handleAddFriend('${escHtml(user.username)}')">Add</button>
+    </div>
+  `).join('');
+}
+window.performGymbroSearch = performGymbroSearch;
+
+// Friend request sending
+async function handleAddFriend(username) {
+  const success = await sendFriendRequest(username);
+  if (success) {
+    const input = document.getElementById('gymbro-search-input');
+    if (input) input.value = '';
+    
+    const resultsContainer = document.getElementById('gymbro-search-results');
+    if (resultsContainer) resultsContainer.style.display = 'none';
+
+    // Reload friend list & requests
+    await Promise.all([
+      loadAndRenderFriendRequests(),
+      loadAndRenderFriendsList()
+    ]);
+  }
+}
+window.handleAddFriend = handleAddFriend;
+
+// Friend requests rendering
+async function loadAndRenderFriendRequests() {
+  const requests = await getFriendRequests();
+  const badge = document.getElementById('request-count-badge');
+  const container = document.getElementById('gymbro-requests-list');
+
+  if (requests && requests.length > 0) {
+    if (badge) {
+      badge.textContent = requests.length;
+      badge.style.display = 'inline-flex';
+    }
+    if (container) {
+      container.innerHTML = requests.map(req => `
+        <div class="gymbro-request-card">
+          <div class="gymbro-request-card-info">
+            <div class="gymbro-request-card-avatar">${escHtml(req.sender.avatar || '👤')}</div>
+            <div>
+              <div class="gymbro-request-card-name">${escHtml(req.sender.username)}</div>
+              <div class="gymbro-request-card-sub">wants to be gymbros</div>
+            </div>
+          </div>
+          <div class="gymbro-request-card-actions">
+            <button class="btn btn-sm btn-primary" onclick="handleAcceptFriendRequest('${req.id}')">Accept</button>
+            <button class="btn btn-sm btn-ghost" onclick="handleDeclineFriendRequest('${req.id}')">Decline</button>
+          </div>
+        </div>
+      `).join('');
+    }
+  } else {
+    if (badge) badge.style.display = 'none';
+    if (container) {
+      container.innerHTML = '<p class="muted-text">No pending requests.</p>';
+    }
+  }
+}
+window.loadAndRenderFriendRequests = loadAndRenderFriendRequests;
+
+// Accept request handler
+async function handleAcceptFriendRequest(requestId) {
+  const success = await acceptFriendRequest(requestId);
+  if (success) {
+    await Promise.all([
+      loadAndRenderFriendRequests(),
+      loadAndRenderFriendsList()
+    ]);
+  }
+}
+window.handleAcceptFriendRequest = handleAcceptFriendRequest;
+
+// Decline request handler
+async function handleDeclineFriendRequest(requestId) {
+  const success = await declineFriendRequest(requestId);
+  if (success) {
+    await loadAndRenderFriendRequests();
+  }
+}
+window.handleDeclineFriendRequest = handleDeclineFriendRequest;
+
+// Friends rendering
+async function loadAndRenderFriendsList() {
+  const friends = await getFriends();
+  const countBadge = document.getElementById('friend-count-badge');
+  if (countBadge) countBadge.textContent = friends.length;
+
+  const container = document.getElementById('gymbros-friends-list');
+  if (!container) return;
+
+  if (friends && friends.length > 0) {
+    // Store friend data in a Map so onclick can look it up safely (avoids inline param escaping issues)
+    window._gymbroFriendMap = {};
+    friends.forEach(f => { window._gymbroFriendMap[f.friend_id] = f; });
+
+    container.innerHTML = friends.map(friend => {
+      const statusClass = friend.is_online ? 'online' : 'offline';
+      const formattedVolume = friend.total_volume >= 1000
+        ? (friend.total_volume / 1000).toFixed(1) + 'k'
+        : friend.total_volume;
+
+      return `
+        <div class="gymbro-friend-card" id="friend-card-${friend.friend_id}">
+          <div class="gymbro-friend-card-info gymbro-open-chat" data-friend-id="${friend.friend_id}" style="cursor:pointer;">
+            <div class="gymbro-friend-card-avatar-wrap">
+              <div class="gymbro-friend-card-avatar">${escHtml(friend.avatar)}</div>
+              <div class="gymbro-friend-card-status-badge ${statusClass}" id="status-badge-${friend.friend_id}"></div>
+            </div>
+            <div class="gymbro-friend-card-details">
+              <div class="gymbro-friend-card-name">${escHtml(friend.username)}</div>
+              <div class="gymbro-friend-card-stats">🔥 ${friend.streak} streak · 🏆 ${friend.pr_count} PRs · 🏋️ ${formattedVolume} kg</div>
+            </div>
+          </div>
+          <div class="gymbro-friend-card-actions">
+            <button class="btn btn-sm btn-primary gymbro-open-chat" data-friend-id="${friend.friend_id}" style="cursor:pointer;">Chat 💬</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Attach event listeners using delegation — avoids any inline-onclick attribute escaping issues
+    container.querySelectorAll('.gymbro-open-chat').forEach(el => {
+      el.addEventListener('click', (e) => {
+        const friendId = el.dataset.friendId;
+        const friend = window._gymbroFriendMap && window._gymbroFriendMap[friendId];
+        if (friend) {
+          openChat(friend.friend_id, friend.username, friend.avatar, friend.is_online);
+        }
+      });
+    });
+
+    // Setup real-time status listeners
+    if (activeFriendStatusSubscription && supabaseClient) {
+      supabaseClient.removeChannel(activeFriendStatusSubscription);
+    }
+    const friendIds = friends.map(f => f.friend_id);
+    activeFriendStatusSubscription = subscribeToUserStatus(friendIds, (statusUpdate) => {
+      const badge = document.getElementById(`status-badge-${statusUpdate.user_id}`);
+      if (badge) {
+        badge.className = `gymbro-friend-card-status-badge ${statusUpdate.is_online ? 'online' : 'offline'}`;
+      }
+
+      // Update active Chat header status if matching
+      if (activeChatFriendId === statusUpdate.user_id) {
+        const chatStatus = document.getElementById('chat-friend-status');
+        if (chatStatus) {
+          chatStatus.innerHTML = statusUpdate.is_online
+            ? `<span class="status-dot online"></span> Online`
+            : `<span class="status-dot offline"></span> Offline`;
+        }
+      }
+
+      // Also update the stored map entry
+      if (window._gymbroFriendMap && window._gymbroFriendMap[statusUpdate.user_id]) {
+        window._gymbroFriendMap[statusUpdate.user_id].is_online = statusUpdate.is_online;
+      }
+    });
+  } else {
+    container.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon">👥</span>
+        <p>Add your first gymbro to get started!</p>
+      </div>
+    `;
+  }
+}
+window.loadAndRenderFriendsList = loadAndRenderFriendsList;
+
+// Open Chat
+async function openChat(friendId, username, avatar, isOnline) {
+  try {
+    // Clean up existing chat subscription
+    if (activeChatSubscription && supabaseClient) {
+      supabaseClient.removeChannel(activeChatSubscription);
+    }
+
+    activeChatFriendId = friendId;
+
+    // Set chat details
+    const nameEl = document.getElementById('chat-friend-name');
+    const avatarEl = document.getElementById('chat-friend-avatar');
+    const statusEl = document.getElementById('chat-friend-status');
+    const messagesContainer = document.getElementById('chat-messages-container');
+
+    if (nameEl) nameEl.textContent = username;
+    if (avatarEl) avatarEl.textContent = avatar;
+    if (statusEl) {
+      statusEl.innerHTML = isOnline 
+        ? `<span class="status-dot online"></span> Online` 
+        : `<span class="status-dot offline"></span> Offline`;
+    }
+
+    if (messagesContainer) {
+      messagesContainer.innerHTML = `
+        <div class="chat-messages-empty">
+          <div class="chat-messages-empty-icon">💬</div>
+          <div class="chat-messages-empty-text">Loading chat history...</div>
+        </div>
+      `;
+    }
+
+    openModal('chat-modal');
+
+    // Load chat session from Supabase
+    const chat = await getOrCreateChat(friendId);
+    if (!chat) {
+      closeChatModal();
+      return;
+    }
+
+    activeChatId = chat.id;
+
+    // Fetch past messages
+    const messages = await getMessages(chat.id);
+    renderMessages(messages);
+
+    // Subscribe to real-time updates
+    activeChatSubscription = subscribeToMessages(chat.id, (newMsg) => {
+      appendChatMessage(newMsg);
+    });
+  } catch (err) {
+    console.error('[Gymbro] openChat error:', err);
+    toast('Could not open chat. Please try again.');
+    closeChatModal();
+  }
+}
+window.openChat = openChat;
+
+// Click-outside-to-close for chat modal overlay
+(function() {
+  const chatOverlay = document.getElementById('chat-modal');
+  if (chatOverlay) {
+    chatOverlay.addEventListener('click', function(e) {
+      // Only close if the click was directly on the overlay (not on the modal content)
+      if (e.target === chatOverlay) {
+        closeChatModal();
+      }
+    });
+  }
+})();
+
+// Close Chat
+function closeChatModal() {
+  if (activeChatSubscription && supabaseClient) {
+    supabaseClient.removeChannel(activeChatSubscription);
+    activeChatSubscription = null;
+  }
+  activeChatId = null;
+  activeChatFriendId = null;
+
+  const input = document.getElementById('chat-message-input');
+  if (input) input.value = '';
+
+  closeModal('chat-modal');
+}
+window.closeChatModal = closeChatModal;
+
+// Render Messages helper
+function renderMessages(messages) {
+  const container = document.getElementById('chat-messages-container');
+  if (!container) return;
+
+  if (!messages || messages.length === 0) {
+    container.innerHTML = `
+      <div class="chat-messages-empty">
+        <div class="chat-messages-empty-icon">🤝</div>
+        <div class="chat-messages-empty-text">Send a message to start the conversation!</div>
+      </div>
+    `;
+    return;
+  }
+
+  const currentUser = getAuthUser();
+  container.innerHTML = messages.map(msg => {
+    const isSent = msg.sender_id === currentUser.id;
+    const dateStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const rowClass = isSent ? 'sent' : 'received';
+
+    return `
+      <div class="chat-message-row ${rowClass}">
+        <div class="message-bubble">
+          <div class="message-content">${escHtml(msg.content)}</div>
+          <div class="message-meta">
+            <span class="message-time">${dateStr}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  scrollToBottom();
+}
+
+// Append Chat Message helper (used by realtime subscriptions)
+function appendChatMessage(msg) {
+  const container = document.getElementById('chat-messages-container');
+  if (!container) return;
+
+  // Clear placeholder if present
+  const placeholder = container.querySelector('.chat-messages-empty');
+  if (placeholder) placeholder.remove();
+
+  const currentUser = getAuthUser();
+  const isSent = msg.sender_id === currentUser.id;
+  const dateStr = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const rowClass = isSent ? 'sent' : 'received';
+
+  // Avoid duplicate elements (in case of race conditions)
+  const existingMsg = Array.from(container.querySelectorAll('.message-content'))
+    .some(el => el.textContent === msg.content && el.nextElementSibling?.querySelector('.message-time')?.textContent === dateStr);
+  
+  if (existingMsg && isSent) return; // ignore duplicates of user's own sent messages if already rendered by luck
+
+  const row = document.createElement('div');
+  row.className = `chat-message-row ${rowClass}`;
+  row.innerHTML = `
+    <div class="message-bubble">
+      <div class="message-content">${escHtml(msg.content)}</div>
+      <div class="message-meta">
+        <span class="message-time">${dateStr}</span>
+      </div>
+    </div>
+  `;
+  container.appendChild(row);
+  scrollToBottom();
+}
+
+// Send Message handler
+async function handleSendChatMessage() {
+  const input = document.getElementById('chat-message-input');
+  if (!input) return;
+
+  const content = input.value.trim();
+  if (!content || !activeChatId) return;
+
+  input.value = ''; // clear immediately for latency masking
+  
+  // Call API to send
+  await sendMessage(activeChatId, content);
+}
+window.handleSendChatMessage = handleSendChatMessage;
+
+// Share Latest PR action
+async function shareLatestPR() {
+  const prs = DB.get('prs', {});
+  const entries = Object.entries(prs);
+  if (!entries.length) {
+    toast('No PRs logged yet. Log a workout or set a PR first!');
+    return;
+  }
+
+  // Sort and select the latest PR
+  const latestPr = entries
+    .map(([, pr]) => pr)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+
+  const content = `🏆 I set a new PR: ${latestPr.name} - ${latestPr.weight}kg! 💪`;
+  
+  const input = document.getElementById('chat-message-input');
+  if (input) {
+    input.value = content;
+    handleSendChatMessage();
+  }
+}
+window.shareLatestPR = shareLatestPR;
+
+// Scroll to bottom helper
+function scrollToBottom() {
+  const container = document.getElementById('chat-messages-container');
+  if (container) {
+    requestAnimationFrame(() => {
+      container.scrollTop = container.scrollHeight;
+    });
+  }
+}
+
+// Heartbeat online/offline status management
+function startStatusHeartbeat() {
+  if (statusHeartbeatInterval) clearInterval(statusHeartbeatInterval);
+
+  // Set online immediately
+  updateUserStatus(true);
+
+  // Periodic updates while tab is active
+  statusHeartbeatInterval = setInterval(() => {
+    if (getAuthUser() && document.visibilityState === 'visible') {
+      updateUserStatus(true);
+    }
+  }, 45000);
+}
+
+function stopStatusHeartbeat() {
+  if (statusHeartbeatInterval) {
+    clearInterval(statusHeartbeatInterval);
+    statusHeartbeatInterval = null;
+  }
+  updateUserStatus(false);
+}
+
+// Focus/Blur and unload listeners
+window.addEventListener('focus', () => {
+  if (getAuthUser()) updateUserStatus(true);
+});
+
+window.addEventListener('blur', () => {
+  if (getAuthUser()) updateUserStatus(false);
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (getAuthUser()) {
+    updateUserStatus(document.visibilityState === 'visible');
+  }
+});
+
+window.addEventListener('beforeunload', () => {
+  if (getAuthUser()) {
+    updateUserStatus(false);
+  }
+});
+
+// Initialize heartbeat if user starts logged in
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    if (getAuthUser()) {
+      startStatusHeartbeat();
+    }
+  }, 2000);
+});
 
 
 
@@ -11722,4 +13338,725 @@ body.bg-custom::before {
   font-size: 16px;
   cursor: pointer;
   padding: 4px;
+}
+/* ─── Weekly Diet Plan ─── */
+
+.day-diet-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+  transition: all var(--transition);
+}
+
+.day-diet-card:hover {
+  border-color: rgba(0, 229, 160, 0.2);
+}
+
+.day-diet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.day-diet-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.day-diet-macros {
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.day-diet-macros span {
+  margin-left: 8px;
+}
+
+.meal-block {
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-left: 3px solid transparent;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.meal-block.breakfast { border-left-color: #FFB830; }
+.meal-block.lunch     { border-left-color: #00E5A0; }
+.meal-block.dinner    { border-left-color: #00B4D8; }
+.meal-block.snack     { border-left-color: #8A8AFF; }
+
+.meal-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text3);
+  min-width: 60px;
+}
+
+.meal-foods {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+
+.meal-foods .food-item {
+  background: var(--card);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  border: 1px solid var(--card-border);
+}
+
+.meal-macros {
+  font-size: 11px;
+  color: var(--text2);
+  white-space: nowrap;
+  margin-left: 8px;
+}
+
+.day-diet-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.day-diet-actions .btn {
+  flex: 1;
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+/* ─── Onboarding Tour ─── */
+
+#tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none; /* allows clicks on the highlighted element */
+}
+
+.tour-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  z-index: 9998;
+  pointer-events: auto;
+}
+
+.tour-spotlight {
+  position: fixed;
+  border-radius: 16px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75);
+  z-index: 10000;
+  pointer-events: none;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 2px solid var(--accent);
+  background: rgba(0, 229, 160, 0.05);
+}
+
+.tour-tooltip {
+  position: fixed;
+  max-width: 340px;
+  width: 90%;
+  background: var(--bg2);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  z-index: 10001;
+  pointer-events: auto;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+  animation: tooltipPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes tooltipPop {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.tour-step-counter {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.tour-tooltip h3 {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.tour-tooltip p {
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.tour-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.tour-actions .btn {
+  padding: 8px 18px;
+  font-size: 13px;
+}
+
+.tour-actions .btn-ghost {
+  color: var(--text3);
+}
+
+/* Tour arrow pointer (triangle) */
+.tour-tooltip::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--bg2);
+  border-left: 1px solid var(--card-border);
+  border-top: 1px solid var(--card-border);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.tour-tooltip[data-arrow="top"]::after {
+  bottom: -7px;
+  left: 50%;
+  margin-left: -6px;
+  transform: rotate(45deg);
+}
+
+.tour-tooltip[data-arrow="bottom"]::after {
+  top: -7px;
+  left: 50%;
+  margin-left: -6px;
+  transform: rotate(225deg);
+}
+
+.tour-tooltip[data-arrow="left"]::after {
+  right: -7px;
+  top: 50%;
+  margin-top: -6px;
+  transform: rotate(135deg);
+}
+
+.tour-tooltip[data-arrow="right"]::after {
+  left: -7px;
+  top: 50%;
+  margin-top: -6px;
+  transform: rotate(-45deg);
+}
+
+/* Bottom Nav – support up to 8 items */
+#bottom-nav {
+  display: flex;
+  justify-content: space-around;
+  gap: 0;
+}
+
+.nav-btn {
+  flex: 1;
+  min-width: 0;          /* allow shrinking */
+  padding: 6px 2px;      /* reduce padding */
+}
+
+.nav-label {
+  font-size: 9px;        /* smaller label */
+  letter-spacing: 0.2px;
+}
+
+.nav-icon {
+  font-size: 18px;       /* slightly smaller icon */
+}
+
+/* For very narrow screens, hide labels? Optional */
+@media (max-width: 380px) {
+  .nav-label {
+    font-size: 8px;
+  }
+  .nav-icon {
+    font-size: 16px;
+  }
+}
+
+/* ─── Gymbro Cards ─── */
+.gymbro-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  transition: all var(--transition);
+}
+
+.gymbro-card:hover {
+  border-color: rgba(0,229,160,0.3);
+}
+
+.gymbro-avatar {
+  font-size: 32px;
+  width: 48px;
+  height: 48px;
+  background: var(--bg3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gymbro-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.gymbro-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.gymbro-stats {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 2px;
+}
+
+.gymbro-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.gymbro-actions .btn {
+  font-size: 11px;
+  padding: 4px 10px;
+}
+
+/* ─── Low‑end device optimizations ─── */
+@media (max-width: 430px) {
+  /* Disable expensive backdrop‑filter */
+  .card,
+  .modal,
+  .workout-queue-panel,
+  .calorie-summary-card,
+  .calculator-results {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Reduce shadow complexity */
+  .card:hover,
+  .exercise-card:hover,
+  .pr-card:hover {
+    box-shadow: none !important;
+  }
+
+  /* Force GPU acceleration */
+  .page-scroll {
+    transform: translateZ(0);
+    will-change: scroll-position;
+  }
+
+  /* Disable heavy animations */
+  .water-fill::before,
+  .water-fill::after {
+    display: none !important;
+  }
+
+  /* Simpler transitions */
+  .btn,
+  .nav-btn,
+  .muscle-chip {
+    transition: background 0.1s ease !important;
+  }
+}
+
+/* Performance mode – even more aggressive */
+.performance-mode .card,
+.performance-mode .modal {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.performance-mode * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* ═══════════════════ GYMBROS & CHAT STYLES ═══════════════════ */
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--danger);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  vertical-align: middle;
+  box-shadow: 0 2px 5px rgba(255, 71, 87, 0.4);
+}
+
+/* Search results & lists */
+.gymbro-search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  transition: var(--transition);
+}
+.gymbro-search-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.gymbro-search-item-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.gymbro-search-item-avatar {
+  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--card-border);
+}
+.gymbro-search-item-name {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 14px;
+}
+.gymbro-search-item-streak {
+  font-size: 11px;
+  color: var(--text2);
+  margin-top: 2px;
+}
+
+/* Friend request cards */
+.gymbro-request-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  transition: var(--transition);
+}
+.gymbro-request-card-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.gymbro-request-card-avatar {
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.gymbro-request-card-name {
+  font-weight: 700;
+  color: var(--text);
+}
+.gymbro-request-card-sub {
+  font-size: 12px;
+  color: var(--text2);
+}
+.gymbro-request-card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* Active friends list */
+.gymbro-friend-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.gymbro-friend-card:active {
+  transform: scale(0.98);
+}
+.gymbro-friend-card-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+.gymbro-friend-card-avatar-wrap {
+  position: relative;
+}
+.gymbro-friend-card-avatar {
+  font-size: 24px;
+  width: 44px;
+  height: 44px;
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--card-border);
+}
+
+/* Status dots */
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+.status-dot.online {
+  background-color: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+.status-dot.offline {
+  background-color: var(--text3);
+}
+
+/* Online indicator overlay on avatars */
+.gymbro-friend-card-status-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--bg2);
+}
+.gymbro-friend-card-status-badge.online {
+  background-color: var(--accent);
+  box-shadow: 0 0 4px var(--accent);
+}
+.gymbro-friend-card-status-badge.offline {
+  background-color: var(--text3);
+}
+
+.gymbro-friend-card-details {
+  display: flex;
+  flex-direction: column;
+}
+.gymbro-friend-card-name {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.gymbro-friend-card-stats {
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 3px;
+}
+
+.gymbro-friend-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Chat Modal customization */
+.chat-modal-content {
+  max-width: 500px;
+  height: 85vh !important;
+  display: flex;
+  flex-direction: column;
+  background: rgba(17, 17, 24, 0.85) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.chat-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--card-border);
+}
+.chat-header-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.chat-header-avatar {
+  font-size: 24px;
+  width: 38px;
+  height: 38px;
+  background: var(--bg3);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--card-border);
+}
+.chat-header-info h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+.chat-header-status {
+  font-size: 11px;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.chat-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.1);
+  scroll-behavior: smooth;
+}
+
+/* Chat Bubbles */
+.chat-message-row {
+  display: flex;
+  width: 100%;
+}
+.chat-message-row.sent {
+  justify-content: flex-end;
+}
+.chat-message-row.received {
+  justify-content: flex-start;
+}
+
+.message-bubble {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.4;
+  position: relative;
+  word-break: break-word;
+}
+
+.chat-message-row.sent .message-bubble {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+  color: #050508;
+  font-weight: 500;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 229, 160, 0.15);
+}
+
+.chat-message-row.received .message-bubble {
+  background: var(--bg3);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+  border: 1px solid var(--card-border);
+}
+
+.message-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  font-size: 10px;
+  margin-top: 4px;
+}
+.chat-message-row.sent .message-meta {
+  color: rgba(5, 5, 8, 0.6);
+}
+.chat-message-row.received .message-meta {
+  color: var(--text2);
+}
+
+.chat-modal-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--card-border);
+  background: var(--bg2);
+}
+
+.chat-input-wrap {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.chat-input {
+  flex: 1;
+  margin: 0 !important;
+}
+
+.chat-send-btn {
+  margin: 0 !important;
+  height: 42px;
+  padding: 0 16px !important;
+}
+
+/* Chat scroll indicator */
+.chat-messages-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  color: var(--text2);
+  gap: 10px;
+  padding: 40px 0;
+}
+.chat-messages-empty-icon {
+  font-size: 40px;
+  opacity: 0.6;
+}
+.chat-messages-empty-text {
+  font-size: 13px;
 }

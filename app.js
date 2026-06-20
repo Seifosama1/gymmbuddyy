@@ -7103,8 +7103,24 @@ let activeChatId = null;
 let activeChatFriendId = null;
 let activeChatSubscription = null;
 let activeFriendStatusSubscription = null;
+let activeUnreadChatsSubscription = null;
 let gymbrosListenersSet = false;
 let statusHeartbeatInterval = null;
+
+// Dynamic check and UI update of the gymbros tab notification dot
+async function updateGymbrosTabBadge() {
+  const badge = document.getElementById('gymbros-tab-badge');
+  if (!badge) return;
+
+  const count = await checkUnreadChatsCount();
+  if (count > 0) {
+    badge.style.display = 'block';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+window.updateGymbrosTabBadge = updateGymbrosTabBadge;
+
 
 // Initial navigation and render wrapper
 async function renderGymbrosSocial() {
@@ -7423,6 +7439,9 @@ async function openChat(friendId, username, avatar, isOnline) {
     // Fetch past messages
     const messages = await getMessages(chat.id);
     renderMessages(messages);
+    
+    // Sync the tab badge because unread messages in this chat are now read
+    updateGymbrosTabBadge();
 
     // Subscribe to real-time updates
     activeChatSubscription = subscribeToMessages(chat.id, (newMsg) => {
@@ -7533,6 +7552,19 @@ function appendChatMessage(msg) {
   `;
   container.appendChild(row);
   scrollToBottom();
+
+  // If we are actively viewing this chat, read the message instantly in database and clear badge status
+  if (!isSent && activeChatFriendId === msg.sender_id) {
+    if (window.supabaseClient) {
+      window.supabaseClient
+        .from('messages')
+        .update({ read_at: new Date().toISOString() })
+        .eq('id', msg.id)
+        .then(() => {
+          updateGymbrosTabBadge();
+        });
+    }
+  }
 }
 
 // Send Message handler
@@ -7652,10 +7684,23 @@ function startStatusHeartbeat() {
   // Set online immediately
   updateUserStatus(true);
 
+  // Initial tab badge sync
+  setTimeout(() => {
+    updateGymbrosTabBadge();
+    
+    // Subscribe to new/unread messages to update badge in realtime
+    if (typeof subscribeToUnreadChats === 'function' && !activeUnreadChatsSubscription) {
+      activeUnreadChatsSubscription = subscribeToUnreadChats(() => {
+        updateGymbrosTabBadge();
+      });
+    }
+  }, 1000);
+
   // Periodic updates while tab is active
   statusHeartbeatInterval = setInterval(() => {
     if (getAuthUser() && document.visibilityState === 'visible') {
       updateUserStatus(true);
+      updateGymbrosTabBadge();
     }
   }, 45000);
 }
@@ -7664,6 +7709,10 @@ function stopStatusHeartbeat() {
   if (statusHeartbeatInterval) {
     clearInterval(statusHeartbeatInterval);
     statusHeartbeatInterval = null;
+  }
+  if (activeUnreadChatsSubscription && supabaseClient) {
+    supabaseClient.removeChannel(activeUnreadChatsSubscription);
+    activeUnreadChatsSubscription = null;
   }
   updateUserStatus(false);
 }
