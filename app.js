@@ -962,7 +962,7 @@ function getWeekStart() {
 
 function openModal(id) { 
   document.getElementById(id).classList.add('open');
-  SoundManager.modalOpen();
+  if (typeof SoundManager !== 'undefined') SoundManager.modalOpen();
 }function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 let toastTimer;
@@ -2103,7 +2103,7 @@ function copyScheduleToClipboard() {
 
 // ─── Navigation ─────────────────────────────────────────
 function navigate(page) {
-  SoundManager.tap();
+  if (typeof SoundManager !== 'undefined') SoundManager.tap();
 
   // Use requestAnimationFrame to batch DOM updates
   requestAnimationFrame(() => {
@@ -2608,7 +2608,7 @@ function toggleSetCheck(i, rest) {
   const num = document.getElementById('set-num-' + i);
   const isDone = check.classList.toggle('checked');
   num.classList.toggle('done', isDone);
-  isDone ? SoundManager.check() : SoundManager.uncheck();
+  isDone ? (typeof SoundManager !== 'undefined' && SoundManager.check()) : (typeof SoundManager !== 'undefined' && SoundManager.uncheck());
   if (isDone && rest > 0) startRestTimer(rest);
 }
 
@@ -3470,7 +3470,7 @@ function addWater(ml) {
   const log = getData().waterLog;
   log.push({ amount: ml, date: new Date().toISOString() });
   DB.set('waterLog', log);
-  SoundManager.waterSplash();
+  if (typeof SoundManager !== 'undefined') SoundManager.waterSplash();
   toast(`+${ml}ml 💧`);
   renderWater();
   updateDashWater();
@@ -4490,7 +4490,7 @@ function loadDayIntoQueue(day) {
     toast(`✅ Loaded ${added} exercise${added !== 1 ? 's' : ''} from ${day}!`);
   }
 
-  SoundManager.success();
+  if (typeof SoundManager !== 'undefined') SoundManager.success();
 }
 
 // Quick log with prompt (⚡ button)
