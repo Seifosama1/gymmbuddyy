@@ -43,7 +43,17 @@ create policy "Users can select own friendships" on friends
   for select using (auth.uid() = user_id or auth.uid() = friend_id);
 
 create policy "Users can insert own friendships" on friends
-  for insert with check (auth.uid() = user_id);
+  for insert with check (
+    (auth.uid() = user_id or auth.uid() = friend_id)
+    and exists (
+      select 1 from friend_requests
+      where (
+        (sender_id = user_id and receiver_id = friend_id)
+        or (sender_id = friend_id and receiver_id = user_id)
+      )
+      and status = 'accepted'
+    )
+  );
 
 
 -- 3. chats table

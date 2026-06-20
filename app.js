@@ -4530,26 +4530,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // ══════════════════════════════════════════
 
   // Throttle scroll events (reduce event firing)
-  let ticking = false;
   const scrollContainer = document.querySelector('.page-scroll');
   if (scrollContainer) {
-    scrollContainer.addEventListener('scroll', function() {
-      if (!ticking) {
-        requestAnimationFrame(function() {
-          // Your scroll logic here if needed
-          ticking = false;
-        });
-        ticking = true;
-      }
-    });
-
-const scrollContainer = document.querySelector('.page-scroll');
-if (scrollContainer) {
-  scrollContainer.addEventListener('scroll', throttle(() => {
-    // No heavy work – just let the browser breathe
-  }, 200), { passive: true });
-}
-
+    scrollContainer.addEventListener('scroll', throttle(() => {
+      // No heavy work – just let the browser breathe
+    }, 200), { passive: true });
   }
 
   // Debounce input events
