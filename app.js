@@ -69,6 +69,7 @@ function throttle(fn, delay = 300) {
   };
 }
 
+
 // Debounce wrapper – waits for idle before executing
 function debounce(fn, delay = 250) {
   let timer;
@@ -78,7 +79,19 @@ function debounce(fn, delay = 250) {
   };
 }
 
-// ─── Constants ───────────────────────────────────────────
+// ─── Performance: debounced wrappers ──────────────────────
+// Coalesces all rapid syncUserDataToCloud calls (26 sites) into ONE
+// network request after 1.5s of inactivity. Critical for mobile battery.
+const _debouncedSyncToCloud = debounce(function _doSync() {
+  // Call the real async function without awaiting — fire-and-forget
+  syncUserDataToCloud();
+}, 1500);
+
+// Debounced search handlers – fire only after user pauses typing (200ms)
+const _debouncedFilterFood     = debounce(function() { filterFoodList(); }, 200);
+const _debouncedFilterSchedule = debounce(function() { filterScheduleExercises(); }, 200);
+
+
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 // ─── Food Database ───────────────────────────────────────
@@ -842,7 +855,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const list = document.getElementById('autocomplete-list');
 
   if (input) {
-    input.addEventListener('input', updateAutocomplete);
+    // Debounce autocomplete: fire only after 150ms pause in typing
+    const _debouncedAutocomplete = debounce(updateAutocomplete, 150);
+    input.addEventListener('input', _debouncedAutocomplete);
 
     input.addEventListener('keydown', function(e) {
       const items = list.querySelectorAll('.autocomplete-item');
@@ -1610,7 +1625,7 @@ function renderWeeklySchedule() {
       </div>
     `;
   }).join('');
-    syncUserDataToCloud();
+  _debouncedSyncToCloud();
 
 }
 
@@ -1629,7 +1644,7 @@ function editScheduleDay(day) {
   renderAvailableExercises('');
   
   openModal('schedule-modal');
-    syncUserDataToCloud();
+  _debouncedSyncToCloud();
 
 }
 
@@ -2687,7 +2702,7 @@ function saveSession() {
     cardioLog.push({ type: ex.name, duration, distance, calories, date: new Date().toISOString() });
     DB.set('cardioLog', cardioLog);
     renderCalorieTracker();
-    syncUserDataToCloud();
+    _debouncedSyncToCloud();
   } else {
     const sets = ex.sets || 3;
     const loggedSets = [];
@@ -3192,8 +3207,8 @@ function saveGoal() {
   DB.set('weeklyGoals', goals);
   closeModal('goal-modal');
   toast('Goal set!');
-  renderWeeklyGoals();      
-  syncUserDataToCloud();
+  renderWeeklyGoals();
+  _debouncedSyncToCloud();
 
 }
 
@@ -3234,7 +3249,7 @@ function deleteGoal(id) {
   DB.set('weeklyGoals', getData().weeklyGoals.filter(g => g.id !== id));
   toast('Goal removed');
   renderWeeklyGoals();
-    syncUserDataToCloud();
+  _debouncedSyncToCloud();
 
 }
 
@@ -3248,7 +3263,7 @@ function saveWeightLossGoal() {
   DB.set('weightLossGoal', { currentWeight: current, targetWeight: target, targetDate: date, createdAt: new Date().toISOString() });
   toast('Weight loss goal saved!');
   renderWeightLossGoal();
-    syncUserDataToCloud();
+  _debouncedSyncToCloud();
 
 }
 
@@ -3263,7 +3278,7 @@ function logWeight() {
   toast('Weight logged!');
   renderWeightLossGoal();
   renderDashboard();
-    syncUserDataToCloud();
+  _debouncedSyncToCloud();
 
 }
 
@@ -3330,7 +3345,7 @@ function saveCardioGoal() {
   DB.set('cardioGoal', { minutesPerWeek: minutes, sessionsPerWeek: sessions, createdAt: new Date().toISOString() });
   toast('Cardio goal saved!');
   renderCardioGoals();
-    syncUserDataToCloud();
+  _debouncedSyncToCloud();
 
 }
 
@@ -3354,7 +3369,7 @@ function logCardio() {
   toast(`Cardio logged! 🏃 ~${calories} kcal burned`);
   renderCardioGoals();
   renderCalorieTracker();
-  if (getAuthUser()) syncUserDataToCloud();
+  if (getAuthUser()) _debouncedSyncToCloud();
 }
 
 function renderCardioGoals() {
@@ -3459,7 +3474,7 @@ function addWater(ml) {
   toast(`+${ml}ml 💧`);
   renderWater();
   updateDashWater();
-    syncUserDataToCloud();
+  _debouncedSyncToCloud();
 
 }
 
@@ -3469,7 +3484,7 @@ function addWaterCustom() {
   const customInput = document.getElementById('water-custom-amount');
   if (customInput) customInput.value = '';
   addWater(val);
-    syncUserDataToCloud();
+  _debouncedSyncToCloud();
 
 }
 
@@ -4617,19 +4632,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 200), { passive: true });
   }
 
-  // Debounce input events
-  const searchInput = document.getElementById('exercise-search');
-  if (searchInput) {
-    let debounceTimer;
-    const originalOnInput = searchInput.oninput;
-    searchInput.oninput = function(e) {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        if (originalOnInput) originalOnInput.call(searchInput, e);
-        filterExercises();
-      }, 150);
-    };
-  }
+  // Debounce input events (exercise-search handled by DOMContentLoaded listener)
+  // Food/schedule search debounced via _debouncedFilterFood / _debouncedFilterSchedule
 
   // Batch DOM updates using requestAnimationFrame
   window.batchUpdate = function(updateFn) {
@@ -7087,7 +7091,7 @@ function resetUserData() {
   renderPRLists();
   loadWorkoutQueue();
   // Maybe show a welcome back state
-    syncUserDataToCloud();
+  _debouncedSyncToCloud();
 
 }
 window.resetUserData = resetUserData;

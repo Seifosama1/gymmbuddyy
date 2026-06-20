@@ -981,7 +981,7 @@
           <h3 class="section-title">Add Exercise</h3>
         </div>
         <div class="search-wrap" style="margin-bottom:8px">
-          <input type="text" class="search-input" id="schedule-exercise-search" placeholder="Search exercises..." oninput="filterScheduleExercises()" />
+          <input type="text" class="search-input" id="schedule-exercise-search" placeholder="Search exercises..." oninput="_debouncedFilterSchedule()" />
         </div>
         <div id="schedule-available-exercises" class="schedule-available-exercises">
           <!-- dynamic -->
@@ -1051,7 +1051,7 @@
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label">Search Food</label>
-          <input type="text" class="form-input" id="food-search-input" placeholder="Type to search..." oninput="filterFoodList()" />
+          <input type="text" class="form-input" id="food-search-input" placeholder="Type to search..." oninput="_debouncedFilterFood()" />
         </div>
         
         <div id="food-search-results" class="food-search-results">
