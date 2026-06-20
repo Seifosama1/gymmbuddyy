@@ -7215,15 +7215,19 @@ async function loadAndRenderFriendsList() {
   if (!container) return;
 
   if (friends && friends.length > 0) {
+    // Store friend data in a Map so onclick can look it up safely (avoids inline param escaping issues)
+    window._gymbroFriendMap = {};
+    friends.forEach(f => { window._gymbroFriendMap[f.friend_id] = f; });
+
     container.innerHTML = friends.map(friend => {
       const statusClass = friend.is_online ? 'online' : 'offline';
-      const formattedVolume = friend.total_volume >= 1000 
-        ? (friend.total_volume / 1000).toFixed(1) + 'k' 
+      const formattedVolume = friend.total_volume >= 1000
+        ? (friend.total_volume / 1000).toFixed(1) + 'k'
         : friend.total_volume;
 
       return `
         <div class="gymbro-friend-card" id="friend-card-${friend.friend_id}">
-          <div class="gymbro-friend-card-info" onclick="openChat('${friend.friend_id}', '${escHtml(friend.username)}', '${escHtml(friend.avatar)}', ${friend.is_online})">
+          <div class="gymbro-friend-card-info gymbro-open-chat" data-friend-id="${friend.friend_id}" style="cursor:pointer;">
             <div class="gymbro-friend-card-avatar-wrap">
               <div class="gymbro-friend-card-avatar">${escHtml(friend.avatar)}</div>
               <div class="gymbro-friend-card-status-badge ${statusClass}" id="status-badge-${friend.friend_id}"></div>
@@ -7234,13 +7238,24 @@ async function loadAndRenderFriendsList() {
             </div>
           </div>
           <div class="gymbro-friend-card-actions">
-            <button class="btn btn-sm btn-primary" onclick="openChat('${friend.friend_id}', '${escHtml(friend.username)}', '${escHtml(friend.avatar)}', ${friend.is_online})">Chat 💬</button>
+            <button class="btn btn-sm btn-primary gymbro-open-chat" data-friend-id="${friend.friend_id}" style="cursor:pointer;">Chat 💬</button>
           </div>
         </div>
       `;
     }).join('');
 
-    // Setup active status listeners
+    // Attach event listeners using delegation — avoids any inline-onclick attribute escaping issues
+    container.querySelectorAll('.gymbro-open-chat').forEach(el => {
+      el.addEventListener('click', (e) => {
+        const friendId = el.dataset.friendId;
+        const friend = window._gymbroFriendMap && window._gymbroFriendMap[friendId];
+        if (friend) {
+          openChat(friend.friend_id, friend.username, friend.avatar, friend.is_online);
+        }
+      });
+    });
+
+    // Setup real-time status listeners
     if (activeFriendStatusSubscription && supabaseClient) {
       supabaseClient.removeChannel(activeFriendStatusSubscription);
     }
@@ -7250,16 +7265,20 @@ async function loadAndRenderFriendsList() {
       if (badge) {
         badge.className = `gymbro-friend-card-status-badge ${statusUpdate.is_online ? 'online' : 'offline'}`;
       }
-      
+
       // Update active Chat header status if matching
       if (activeChatFriendId === statusUpdate.user_id) {
         const chatStatus = document.getElementById('chat-friend-status');
         if (chatStatus) {
-          chatStatus.className = 'chat-header-status';
-          chatStatus.innerHTML = statusUpdate.is_online 
-            ? `<span class="status-dot online"></span> Online` 
+          chatStatus.innerHTML = statusUpdate.is_online
+            ? `<span class="status-dot online"></span> Online`
             : `<span class="status-dot offline"></span> Offline`;
         }
+      }
+
+      // Also update the stored map entry
+      if (window._gymbroFriendMap && window._gymbroFriendMap[statusUpdate.user_id]) {
+        window._gymbroFriendMap[statusUpdate.user_id].is_online = statusUpdate.is_online;
       }
     });
   } else {
@@ -7275,57 +7294,76 @@ window.loadAndRenderFriendsList = loadAndRenderFriendsList;
 
 // Open Chat
 async function openChat(friendId, username, avatar, isOnline) {
-  // Clean up existing chat subscription
-  if (activeChatSubscription && supabaseClient) {
-    supabaseClient.removeChannel(activeChatSubscription);
-  }
+  try {
+    // Clean up existing chat subscription
+    if (activeChatSubscription && supabaseClient) {
+      supabaseClient.removeChannel(activeChatSubscription);
+    }
 
-  activeChatFriendId = friendId;
+    activeChatFriendId = friendId;
 
-  // Set chat details
-  const nameEl = document.getElementById('chat-friend-name');
-  const avatarEl = document.getElementById('chat-friend-avatar');
-  const statusEl = document.getElementById('chat-friend-status');
-  const messagesContainer = document.getElementById('chat-messages-container');
+    // Set chat details
+    const nameEl = document.getElementById('chat-friend-name');
+    const avatarEl = document.getElementById('chat-friend-avatar');
+    const statusEl = document.getElementById('chat-friend-status');
+    const messagesContainer = document.getElementById('chat-messages-container');
 
-  if (nameEl) nameEl.textContent = username;
-  if (avatarEl) avatarEl.textContent = avatar;
-  if (statusEl) {
-    statusEl.innerHTML = isOnline 
-      ? `<span class="status-dot online"></span> Online` 
-      : `<span class="status-dot offline"></span> Offline`;
-  }
+    if (nameEl) nameEl.textContent = username;
+    if (avatarEl) avatarEl.textContent = avatar;
+    if (statusEl) {
+      statusEl.innerHTML = isOnline 
+        ? `<span class="status-dot online"></span> Online` 
+        : `<span class="status-dot offline"></span> Offline`;
+    }
 
-  if (messagesContainer) {
-    messagesContainer.innerHTML = `
-      <div class="chat-messages-empty">
-        <div class="chat-messages-empty-icon">💬</div>
-        <div class="chat-messages-empty-text">Loading chat history...</div>
-      </div>
-    `;
-  }
+    if (messagesContainer) {
+      messagesContainer.innerHTML = `
+        <div class="chat-messages-empty">
+          <div class="chat-messages-empty-icon">💬</div>
+          <div class="chat-messages-empty-text">Loading chat history...</div>
+        </div>
+      `;
+    }
 
-  openModal('chat-modal');
+    openModal('chat-modal');
 
-  // Load chat session from Supabase
-  const chat = await getOrCreateChat(friendId);
-  if (!chat) {
+    // Load chat session from Supabase
+    const chat = await getOrCreateChat(friendId);
+    if (!chat) {
+      closeChatModal();
+      return;
+    }
+
+    activeChatId = chat.id;
+
+    // Fetch past messages
+    const messages = await getMessages(chat.id);
+    renderMessages(messages);
+
+    // Subscribe to real-time updates
+    activeChatSubscription = subscribeToMessages(chat.id, (newMsg) => {
+      appendChatMessage(newMsg);
+    });
+  } catch (err) {
+    console.error('[Gymbro] openChat error:', err);
+    toast('Could not open chat. Please try again.');
     closeChatModal();
-    return;
   }
-
-  activeChatId = chat.id;
-
-  // Fetch past messages
-  const messages = await getMessages(chat.id);
-  renderMessages(messages);
-
-  // Subscribe to real-time updates
-  activeChatSubscription = subscribeToMessages(chat.id, (newMsg) => {
-    appendChatMessage(newMsg);
-  });
 }
 window.openChat = openChat;
+
+// Click-outside-to-close for chat modal overlay
+(function() {
+  const chatOverlay = document.getElementById('chat-modal');
+  if (chatOverlay) {
+    chatOverlay.addEventListener('click', function(e) {
+      // Only close if the click was directly on the overlay (not on the modal content)
+      if (e.target === chatOverlay) {
+        closeChatModal();
+      }
+    });
+  }
+})();
 
 // Close Chat
 function closeChatModal() {
