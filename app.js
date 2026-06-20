@@ -6403,7 +6403,7 @@ function buildMyStats() {
     pr_count:      prCount,
     total_volume:  Math.round(totalVolume),
     top_pr_name:   topPrName || '—',
-    top_pr_weight: topPrWeight,
+    top_pr_weight: Math.round(parseFloat(topPrWeight) || 0),
     updated_at:    new Date().toISOString()
   };
 }
