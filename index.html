@@ -68,7 +68,10 @@
         <div class="page-scroll">
           <div class="page-header">
             <h2 class="page-title">Weekly Schedule</h2>
-            <button class="btn btn-primary btn-sm" onclick="resetWeeklySchedule()">Reset Plan</button>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button class="btn btn-ghost btn-sm" id="copy-schedule-btn" onclick="copyScheduleToClipboard()" title="Copy schedule to clipboard">📋 Copy</button>
+              <button class="btn btn-primary btn-sm" onclick="resetWeeklySchedule()">Reset Plan</button>
+            </div>
           </div>
           
           <div class="schedule-intro">
@@ -237,6 +240,39 @@
             </div>
             <div id="pr-list-workout" style="padding: 8px; max-height: 200px; overflow-y: auto;">
               <p class="muted-text" style="text-align:center;">No PRs yet. Log a workout or use the calculator!</p>
+            </div>
+          </div>
+
+          <!-- Plate Weight Calculator -->
+          <div class="card-premium" style="margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+              <span style="font-size: 20px;">🏋️‍♂️</span>
+              <h4 style="font-size: 16px; font-weight: 700; color: var(--text);">Plate Weight Calculator</h4>
+            </div>
+            
+            <p class="muted-text" style="font-size: 12px; margin-bottom: 12px;">
+              Enter your target weight to instantly calculate required plates per side (assuming a standard 20kg barbell).
+            </p>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+              <input type="number" id="plate-target-weight" placeholder="Target Weight (kg)" class="form-input" style="flex: 1; margin: 0;" min="20" step="2.5" value="60">
+              <button class="btn btn-primary" onclick="calculateBarbellPlates()" style="padding: 0 16px; height: 42px; margin: 0;">Calculate</button>
+            </div>
+
+            <div id="plate-calculator-results" style="display: none; background: rgba(0,0,0,0.2); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--card-border);">
+              <div style="text-align: center; margin-bottom: 12px;">
+                <span class="muted-text" style="font-size: 11px; display: block; text-transform: uppercase; letter-spacing: 0.5px;">Weight Per Side</span>
+                <span id="weight-per-side-text" style="font-size: 20px; font-weight: 800; color: var(--accent);">0 kg</span>
+              </div>
+              
+              <div style="display: flex; align-items: center; justify-content: center; min-height: 50px; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; margin-bottom: 12px; position: relative;">
+                <div style="position: absolute; left: 10%; right: 10%; height: 6px; background: #55556A; border-radius: 3px; z-index: 1;"></div>
+                <div style="width: 8px; height: 32px; background: #8888A0; border-radius: 2px; z-index: 2; margin-right: 4px; position: relative; left: -10px;"></div>
+                <div id="plate-visual-stack" style="display: flex; align-items: center; gap: 3px; z-index: 3;"></div>
+              </div>
+
+              <div id="plate-text-breakdown" style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--text2);">
+              </div>
             </div>
           </div>
 
@@ -600,22 +636,13 @@
             <h3 class="section-title">💡 Meal Ideas</h3>
             <div class="meal-suggestions-grid" id="meal-suggestions-grid"></div>
           </div>
-        </div>
-      </section>
 
-
-      
-      <!-- ═══════════════════ CALORIE CALCULATOR ═══════════════════ -->
-      <section class="page" id="page-calculator">
-        <div class="page-scroll">
-          <div class="page-header">
+          <!-- Calorie Calculator Section -->
+          <div class="page-header" id="calorie-calculator-section" style="margin-top: 32px; border-top: 1px solid var(--card-border); padding-top: 24px;">
             <h2 class="page-title">Calorie Calculator 🧮</h2>
             <button class="btn btn-primary btn-sm" onclick="saveCalculatorProfile()">Save Profile</button>
-            
           </div>
 
-
-          
           <!-- Calculator Card -->
           <div class="calculator-card">
             <h3 class="calculator-title">Your Stats</h3>
@@ -666,7 +693,7 @@
               </select>
             </div>
             
-            <button class="btn btn-primary calculate-btn" onclick="calculateCalories()">Calculate 🔥</button>
+            <button class="btn btn-primary calculate-btn" onclick="calculateCalories()" style="width: 100%;">Calculate 🔥</button>
           </div>
 
           <!-- Results Card -->
@@ -704,49 +731,15 @@
             </div>
           </div>
 
-
-
           <!-- Saved Profile Info -->
-          <div class="saved-profile" id="saved-profile" style="display: none;">
+          <div class="saved-profile" id="saved-profile" style="display: none; margin-top: 16px;">
             <div class="saved-profile-header">
               <span>💾 Saved Profile</span>
               <button class="btn btn-sm btn-ghost" onclick="clearSavedProfile()">Clear</button>
             </div>
             <div id="saved-profile-info"></div>
           </div>
-          <div class="card-premium" style="margin-top: 16px;">
-  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-    <span style="font-size: 20px;">🏋️‍♂️</span>
-    <h4 style="font-size: 16px; font-weight: 700; color: var(--text);">Plate Weight Calculator</h4>
-  </div>
-  
-  <p class="muted-text" style="font-size: 12px; margin-bottom: 12px;">
-    Enter your target weight to instantly calculate required plates per side (assuming a standard 20kg barbell).
-  </p>
-
-  <div style="display: flex; gap: 10px; margin-bottom: 16px;">
-    <input type="number" id="plate-target-weight" placeholder="Target Weight (kg)" class="form-input" style="flex: 1; margin: 0;" min="20" step="2.5" value="60">
-    <button class="btn btn-primary" onclick="calculateBarbellPlates()" style="padding: 0 16px; height: 42px; margin: 0;">Calculate</button>
-  </div>
-
-  <div id="plate-calculator-results" style="display: none; background: rgba(0,0,0,0.2); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--card-border);">
-    <div style="text-align: center; margin-bottom: 12px;">
-      <span class="muted-text" style="font-size: 11px; display: block; text-transform: uppercase; letter-spacing: 0.5px;">Weight Per Side</span>
-      <span id="weight-per-side-text" style="font-size: 20px; font-weight: 800; color: var(--accent);">0 kg</span>
-    </div>
-    
-    <div style="display: flex; align-items: center; justify-content: center; min-height: 50px; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; margin-bottom: 12px; position: relative;">
-      <div style="position: absolute; left: 10%; right: 10%; height: 6px; background: #55556A; border-radius: 3px; z-index: 1;"></div>
-      <div style="width: 8px; height: 32px; background: #8888A0; border-radius: 2px; z-index: 2; margin-right: 4px; position: relative; left: -10px;"></div>
-      <div id="plate-visual-stack" style="display: flex; align-items: center; gap: 3px; z-index: 3;"></div>
-    </div>
-
-    <div id="plate-text-breakdown" style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--text2);">
-    </div>
-  </div>
-</div>
         </div>
-        
       </section>
 
 <!-- ═══════════════════ DIET PLAN ═══════════════════ -->
@@ -1669,13 +1662,29 @@
         <!-- Messages loaded dynamically -->
       </div>
       <div class="modal-footer chat-modal-footer">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <span style="font-size:11px; color:var(--text2);">Quick action:</span>
-          <button class="btn btn-sm btn-ghost" onclick="shareLatestPR()" style="font-size:11px; padding:4px 8px; margin:0;">🏆 Share Latest PR</button>
-        </div>
-        <div class="chat-input-wrap">
-          <input type="text" id="chat-message-input" class="form-input chat-input" placeholder="Type a message..." autocomplete="off" />
-          <button class="btn btn-primary chat-send-btn" id="chat-send-btn">Send 🚀</button>
+        <!-- Quick Actions Dropdown -->
+        <div class="chat-quick-actions-wrap" id="chat-quick-actions-wrap">
+          <div class="chat-quick-dropdown" id="chat-quick-dropdown">
+            <button class="chat-quick-item" onclick="shareLatestPR(); toggleChatQuickActions()">
+              <span class="chat-quick-item-icon">🏆</span>
+              <div class="chat-quick-item-info">
+                <span class="chat-quick-item-title">Share Latest PR</span>
+                <span class="chat-quick-item-sub">Send your most recent personal record</span>
+              </div>
+            </button>
+            <button class="chat-quick-item" onclick="shareSplitInChat(); toggleChatQuickActions()">
+              <span class="chat-quick-item-icon">📅</span>
+              <div class="chat-quick-item-info">
+                <span class="chat-quick-item-title">Share My Split</span>
+                <span class="chat-quick-item-sub">Send your weekly workout schedule</span>
+              </div>
+            </button>
+          </div>
+          <div class="chat-input-wrap">
+            <button class="btn btn-sm btn-ghost chat-quick-trigger" id="chat-quick-trigger" onclick="toggleChatQuickActions()" title="Quick Actions">⚡</button>
+            <input type="text" id="chat-message-input" class="form-input chat-input" placeholder="Type a message..." autocomplete="off" />
+            <button class="btn btn-primary chat-send-btn" id="chat-send-btn">Send 🚀</button>
+          </div>
         </div>
       </div>
     </div>

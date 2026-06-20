@@ -2025,6 +2025,67 @@ function applySplitTemplate(template) {
   toast(`${template.replace('-', ' ').toUpperCase()} template applied!`);
 }
 
+function copyScheduleToClipboard() {
+  const schedule = getWeeklySchedule();
+  const dayEmojis = { Monday: '💪', Tuesday: '🔥', Wednesday: '⚡', Thursday: '🏋️', Friday: '💥', Saturday: '🌟', Sunday: '😴' };
+
+  const lines = ['📅 My Weekly Workout Schedule', '═'.repeat(32), ''];
+
+  DAYS_OF_WEEK.forEach(day => {
+    const dayData = schedule.days[day] || { name: '', workouts: [] };
+    const emoji = dayEmojis[day] || '🗓';
+    const label = dayData.name ? `${day} — ${dayData.name}` : day;
+    lines.push(`${emoji} ${label}`);
+
+    if (dayData.workouts && dayData.workouts.length > 0) {
+      dayData.workouts.forEach((w, i) => {
+        const setsReps = w.isCardio
+          ? `${w.duration || w.sets || 1} sets`
+          : `${w.sets || 3} sets × ${w.reps || 10} reps`;
+        lines.push(`   ${i + 1}. ${w.name} — ${setsReps} (${w.rest || 60}s rest)`);
+        if (w.notes) lines.push(`      📝 ${w.notes}`);
+      });
+    } else {
+      lines.push('   Rest Day 😴');
+    }
+    lines.push('');
+  });
+
+  lines.push('─'.repeat(32));
+  lines.push('Made with Jim Buddy 💪');
+
+  const text = lines.join('\n');
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      toast('Schedule copied to clipboard! 📋');
+      const btn = document.getElementById('copy-schedule-btn');
+      if (btn) {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✅ Copied!';
+        btn.disabled = true;
+        setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 2000);
+      }
+    }).catch(() => {
+      toast('Could not copy. Try again!', 'error');
+    });
+  } else {
+    // Fallback for older browsers
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      toast('Schedule copied to clipboard! 📋');
+    } catch {
+      toast('Copy not supported on this browser.', 'error');
+    }
+  }
+}
+
 // ─── Navigation ─────────────────────────────────────────
 function navigate(page) {
   SoundManager.tap();
@@ -2034,10 +2095,18 @@ function navigate(page) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
 
-    const targetPage = document.getElementById('page-' + page);
+    let targetPageId = 'page-' + page;
+    let targetBtnPage = page;
+
+    if (page === 'calculator') {
+      targetPageId = 'page-calorie';
+      targetBtnPage = 'calorie';
+    }
+
+    const targetPage = document.getElementById(targetPageId);
     if (targetPage) targetPage.classList.add('active');
 
-    const targetBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
+    const targetBtn = document.querySelector(`.nav-btn[data-page="${targetBtnPage}"]`);
     if (targetBtn) targetBtn.classList.add('active');
 
     state.currentPage = page;
@@ -2049,11 +2118,22 @@ function navigate(page) {
     if (page === 'goals') renderGoals();
     if (page === 'water') renderWater();
     if (page === 'schedule') renderWeeklySchedule();
-    if (page === 'calorie') renderCalorieTracker();
+    if (page === 'calorie') {
+      renderCalorieTracker();
+      const scrollContainer = document.querySelector('#page-calorie .page-scroll');
+      if (scrollContainer) scrollContainer.scrollTop = 0;
+    }
     if (page === 'calculator') {
       renderCalorieTracker();
       displaySavedProfile();
       loadSavedProfile();
+      setTimeout(() => {
+        const targetEl = document.getElementById('calorie-calculator-section');
+        const scrollContainer = document.querySelector('#page-calorie .page-scroll');
+        if (scrollContainer && targetEl) {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 50);
     }
     if (page === 'diet') renderDietPage();
     if (page === 'gymbros') renderGymbros();
@@ -7489,6 +7569,67 @@ async function shareLatestPR() {
   }
 }
 window.shareLatestPR = shareLatestPR;
+
+// ── Quick Actions Dropdown ───────────────────────────────
+function toggleChatQuickActions() {
+  const dropdown = document.getElementById('chat-quick-dropdown');
+  const trigger  = document.getElementById('chat-quick-trigger');
+  if (!dropdown || !trigger) return;
+
+  const isOpen = dropdown.classList.contains('open');
+
+  if (isOpen) {
+    dropdown.classList.remove('open');
+    trigger.classList.remove('active');
+    document.removeEventListener('click', _closeQuickActionsOutside);
+  } else {
+    dropdown.classList.add('open');
+    trigger.classList.add('active');
+    // Close when clicking anywhere outside
+    setTimeout(() => {
+      document.addEventListener('click', _closeQuickActionsOutside);
+    }, 50);
+  }
+}
+
+function _closeQuickActionsOutside(e) {
+  const wrap = document.getElementById('chat-quick-actions-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    const dropdown = document.getElementById('chat-quick-dropdown');
+    const trigger  = document.getElementById('chat-quick-trigger');
+    if (dropdown) dropdown.classList.remove('open');
+    if (trigger)  trigger.classList.remove('active');
+    document.removeEventListener('click', _closeQuickActionsOutside);
+  }
+}
+
+// Share current weekly split as a chat message
+function shareSplitInChat() {
+  const schedule = getWeeklySchedule();
+  const dayEmojis = { Monday:'💪', Tuesday:'🔥', Wednesday:'⚡', Thursday:'🏋️', Friday:'💥', Saturday:'🌟', Sunday:'😴' };
+
+  const parts = ['📅 My Weekly Split:'];
+  DAYS_OF_WEEK.forEach(day => {
+    const dayData = schedule.days[day] || { name: '', workouts: [] };
+    const emoji   = dayEmojis[day] || '🗓';
+    const label   = dayData.name ? dayData.name : (dayData.workouts?.length ? 'Training' : 'Rest');
+    const count   = dayData.workouts?.length || 0;
+    const exList  = count
+      ? dayData.workouts.slice(0, 3).map(w => w.name).join(', ') + (count > 3 ? ` +${count - 3}` : '')
+      : 'Rest day 😴';
+    parts.push(`${emoji} ${day}: ${label} — ${exList}`);
+  });
+  parts.push('— Sent from Jim Buddy 💪');
+
+  const content = parts.join('\n');
+  const input = document.getElementById('chat-message-input');
+  if (input) {
+    input.value = content;
+    handleSendChatMessage();
+  }
+}
+window.shareSplitInChat       = shareSplitInChat;
+window.toggleChatQuickActions = toggleChatQuickActions;
 
 // Scroll to bottom helper
 function scrollToBottom() {
