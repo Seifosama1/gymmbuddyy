@@ -89,6 +89,7 @@ const _debouncedSyncToCloud = debounce(function _doSync() {
 
 // Debounced search handlers – fire only after user pauses typing (200ms)
 const _debouncedFilterFood     = debounce(function() { filterFoodList(); }, 200);
+const _debouncedFilterDietFood = debounce(function() { filterDietFoodList(); }, 200);
 const _debouncedFilterSchedule = debounce(function() { filterScheduleExercises(); }, 200);
 
 
@@ -250,6 +251,27 @@ const FOOD_DATABASE = [
 { id: 'kiri-square',       name: 'Kiri Cream Cheese Square',    calories: 52,  protein: 0.9,  carbs: 0.7,  fats: 5.1,  serving: '1 square (18g)' },
 { id: 'la-vache-qu-rit',   name: 'Triangle Cheese (La Vache)',  calories: 40,  protein: 1.3,  carbs: 0.9,  fats: 3.5,  serving: '1 triangle (15g)' },
 { id: 'parmesan',          name: 'Parmesan Cheese',             calories: 431, protein: 38,   carbs: 4.1,  fats: 29,   serving: '100g' },
+{ id: 'sausage-beef', name: 'Beef Sausage (Grilled)', calories: 301, protein: 14.3, carbs: 1.2, fats: 26.8, serving: '100g' },
+{ id: 'sausage-chicken', name: 'Chicken Sausage', calories: 172, protein: 15.2, carbs: 1.5, fats: 11.4, serving: '100g' },
+{ id: 'sausage-egyptian', name: 'Sogoq (Egyptian Sausage)', calories: 340, protein: 13.5, carbs: 4.2, fats: 29.5, serving: '100g' },
+{ id: 'creatine-monohydrate', name: 'Creatine Monohydrate', calories: 0, protein: 0, carbs: 0, fats: 0, serving: '1 scoop (5g)' },
+{ id: 'bcaa-powder', name: 'BCAA Powder', calories: 20, protein: 4.5, carbs: 0.5, fats: 0, serving: '1 scoop' },
+{ id: 'casein-protein', name: 'Casein Protein Powder', calories: 110, protein: 25, carbs: 1, fats: 0.5, serving: '1 scoop' },
+{ id: 'pre-workout', name: 'Pre-Workout Supplement', calories: 15, protein: 0, carbs: 3, fats: 0, serving: '1 scoop' },{ id: 'sting-energy-red', name: 'Sting Energy Drink (Strawberry)', calories: 142, protein: 0, carbs: 35.5, fats: 0, serving: '1 bottle (250ml)' },
+{ id: 'red-bull', name: 'Red Bull Energy Drink', calories: 112, protein: 1, carbs: 26, fats: 0, serving: '1 can (250ml)' },
+{ id: 'monster-energy-zero', name: 'Monster Energy Ultra (Zero Sugar)', calories: 10, protein: 0, carbs: 2, fats: 0, serving: '1 can (500ml)' },
+{ id: 'fayrouz-pineapple', name: 'Fayrouz (Pineapple)', calories: 96, protein: 0, carbs: 24, fats: 0, serving: '1 can (330ml)' },
+{ id: 'pepsi-diet', name: 'Diet Pepsi / Pepsi Zero', calories: 0, protein: 0, carbs: 0, fats: 0, serving: '1 can (330ml)' },
+{ id: 'pepsi-regular', name: 'Pepsi (Regular)', calories: 145, protein: 0, carbs: 39, fats: 0, serving: '1 can (330ml)' },
+{ id: 'sugar-cane-juice', name: 'Asab (Egyptian Sugar Cane Juice)', calories: 130, protein: 0.5, carbs: 32, fats: 0, serving: '1 glass (250ml)' },{ id: 'stuffed-pigeon-hamam', name: 'Hamam Mahshi (Stuffed Pigeon with Freek/Rice)', calories: 625, protein: 33, carbs: 48, fats: 31, serving: '1 pigeon (~300g)' },
+{ id: 'roz-meammar-beef', name: 'Roz Meammar (Egyptian Baked Rice with Cream & Beef)', calories: 350, protein: 12, carbs: 38, fats: 16, serving: '100g' },
+{ id: 'stuffed-pigeon-hamam', name: 'Hamam Mahshi (Stuffed Pigeon with Freek/Rice)', calories: 625, protein: 33, carbs: 48, fats: 31, serving: '1 pigeon (~300g)' },{ id: 'basbousa-plain', name: 'Basbousa (Semolina Cake with Syrup)', calories: 340, protein: 4, carbs: 54, fats: 12, serving: '100g' },
+  { id: 'kunafa-cream', name: 'Kunafa with Cream (Eshta)', calories: 375, protein: 4.5, carbs: 49, fats: 18, serving: '100g' },
+  { id: 'om-ali-nuts', name: 'Om Ali (Egyptian Bread Pudding with Cream & Nuts)', calories: 280, protein: 6, carbs: 36, fats: 12.5, serving: '100g' },
+  { id: 'balah-el-sham', name: 'Balah El Sham (Choux Pastry Deep Fried in Syrup)', calories: 425, protein: 4.8, carbs: 61, fats: 18, serving: '100g' },
+  { id: 'roz-bel-laban', name: 'Roz Bel Laban (Egyptian Rice Pudding)', calories: 115, protein: 3.2, carbs: 21, fats: 2, serving: '100g' },
+  { id: 'granola-plain-rolled', name: 'Granola (Classic Honey Oat, Homemade)', calories: 471, protein: 10, carbs: 64, fats: 20, serving: '100g' },{ id: 'indomie-chicken-regular', name: 'Indomie Instant Noodles (Chicken Flavor)', calories: 350, protein: 7, carbs: 48, fats: 14, serving: '1 pack (75g)' },
+  { id: 'indomie-beef-flavor', name: 'Indomie Instant Noodles (Beef Flavor)', calories: 340, protein: 7, carbs: 47, fats: 13.5, serving: '1 pack (75g)' },
 ];
 
 // ─── Diet Plan Blueprints ──────────────────────────────
@@ -515,7 +537,7 @@ function renderDietPage(plan) {
         ${mealBlocks}
         <div class="day-diet-actions">
           <button class="btn btn-sm btn-primary" onclick="addDayToLog(${dayIdx})">➕ Add to Today</button>
-          <button class="btn btn-sm btn-ghost" onclick="regenerateDay(${dayIdx})">🔄 Regen Day</button>
+          <button class="btn btn-sm btn-ghost" onclick="editDietDay(${dayIdx})">✏️ Edit Day</button>
         </div>
       </div>
     `;
@@ -597,6 +619,251 @@ function regenerateDay(dayIndex) {
 
 }
 
+function getAllFoods() {
+  return [...FOOD_DATABASE, ...(getData().customFoods || [])];
+}
+
+function calculateMacrosFromFoods(foods) {
+  let total = { calories: 0, protein: 0, carbs: 0, fats: 0 };
+  for (let i = 0; i < foods.length; i += 2) {
+    const id = foods[i];
+    const qty = foods[i + 1];
+    const dbFood = getAllFoods().find(f => f.id === id);
+    if (dbFood) {
+      total.calories += dbFood.calories * qty;
+      total.protein  += (dbFood.protein || 0) * qty;
+      total.carbs    += (dbFood.carbs || 0) * qty;
+      total.fats     += (dbFood.fats || 0) * qty;
+    }
+  }
+  return {
+    calories: Math.round(total.calories),
+    protein:  Math.round(total.protein * 10) / 10,
+    carbs:    Math.round(total.carbs * 10) / 10,
+    fats:     Math.round(total.fats * 10) / 10,
+  };
+}
+
+function buildMealLabelFromFoods(foods) {
+  const names = [];
+  for (let i = 0; i < foods.length; i += 2) {
+    const dbFood = getAllFoods().find(f => f.id === foods[i]);
+    if (dbFood) names.push(dbFood.name);
+  }
+  return names.length ? names.join(' + ') : 'Empty meal';
+}
+
+function getDietDayTotals(meals) {
+  const mealKeys = ['breakfast', 'lunch', 'dinner', 'snack1', 'snack2'];
+  const total = { calories: 0, protein: 0, carbs: 0, fats: 0 };
+  mealKeys.forEach(key => {
+    const m = meals[key]?.macros || {};
+    total.calories += m.calories || 0;
+    total.protein  += m.protein || 0;
+    total.carbs    += m.carbs || 0;
+    total.fats     += m.fats || 0;
+  });
+  return total;
+}
+
+function recalculateDietMeal(meal) {
+  if (!meal) return;
+  meal.macros = calculateMacrosFromFoods(meal.foods || []);
+  meal.label = buildMealLabelFromFoods(meal.foods || []);
+}
+
+function editDietDay(dayIndex) {
+  const plan = DB.get('weeklyDietPlan', null);
+  if (!plan || !plan[dayIndex]) {
+    toast('Plan not found');
+    return;
+  }
+  state.editingDietDayIndex = dayIndex;
+  state.dietDaySnapshot = JSON.stringify(plan[dayIndex]);
+  const searchInput = document.getElementById('diet-food-search');
+  if (searchInput) searchInput.value = '';
+  renderDietDayEditModal();
+  openModal('diet-day-modal');
+}
+
+function renderDietDayEditModal() {
+  const dayIndex = state.editingDietDayIndex;
+  const plan = DB.get('weeklyDietPlan', null);
+  if (dayIndex == null || !plan || !plan[dayIndex]) return;
+
+  const day = plan[dayIndex];
+  const meals = day.meals || {};
+  const mealKeys = ['breakfast', 'lunch', 'dinner', 'snack1', 'snack2'];
+  const mealLabels = { breakfast: '🌅 Breakfast', lunch: '☀️ Lunch', dinner: '🌙 Dinner', snack1: '🍎 Snack 1', snack2: '🍌 Snack 2' };
+
+  const titleEl = document.getElementById('diet-day-modal-title');
+  if (titleEl) titleEl.textContent = `Edit ${day.day}`;
+
+  const dayTotal = getDietDayTotals(meals);
+  const totalsEl = document.getElementById('diet-day-totals');
+  if (totalsEl) {
+    totalsEl.innerHTML = `
+      <div class="diet-day-totals-inner">
+        <span class="diet-day-totals-label">Day Total</span>
+        <span class="diet-day-totals-values">
+          🔥 ${Math.round(dayTotal.calories)} kcal ·
+          💪 ${Math.round(dayTotal.protein)}g P ·
+          🍚 ${Math.round(dayTotal.carbs)}g C ·
+          🧈 ${Math.round(dayTotal.fats)}g F
+        </span>
+      </div>
+    `;
+  }
+
+  const mealsEl = document.getElementById('diet-day-meals');
+  if (mealsEl) {
+    mealsEl.innerHTML = mealKeys.map(key => {
+      const meal = meals[key] || { label: '', foods: [], macros: { calories: 0, protein: 0, carbs: 0, fats: 0 } };
+      const m = meal.macros || { calories: 0, protein: 0, carbs: 0, fats: 0 };
+      const foodRows = [];
+      for (let i = 0; i < (meal.foods || []).length; i += 2) {
+        const foodId = meal.foods[i];
+        const qty = meal.foods[i + 1];
+        const foodIdx = i / 2;
+        const dbFood = getAllFoods().find(f => f.id === foodId);
+        if (!dbFood) continue;
+        foodRows.push(`
+          <div class="diet-food-row">
+            <div class="diet-food-info">
+              <span class="diet-food-name">${escHtml(dbFood.name)}</span>
+              <span class="diet-food-serving">${escHtml(dbFood.serving || '1 serving')}</span>
+            </div>
+            <input type="number" class="form-input diet-qty-input" value="${qty}" step="0.1" min="0.1"
+              inputmode="decimal" onchange="updateDietFoodQuantity('${key}', ${foodIdx}, this.value)" />
+            <button class="icon-btn-small" onclick="removeDietFoodFromMeal('${key}', ${foodIdx})" title="Remove">✕</button>
+          </div>
+        `);
+      }
+      return `
+        <div class="diet-meal-section">
+          <div class="diet-meal-header">
+            <span class="diet-meal-title">${mealLabels[key]}</span>
+            <span class="diet-meal-macros">${m.calories} kcal · ${m.protein}g P · ${m.carbs}g C · ${m.fats}g F</span>
+          </div>
+          <div class="diet-food-list">
+            ${foodRows.length ? foodRows.join('') : '<p class="muted-text diet-empty-meal">No foods yet — search below to add.</p>'}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  filterDietFoodList();
+}
+
+function filterDietFoodList() {
+  const searchTerm = document.getElementById('diet-food-search')?.value.toLowerCase() || '';
+  const filtered = getAllFoods().filter(food => food.name.toLowerCase().includes(searchTerm));
+  const resultsDiv = document.getElementById('diet-food-search-results');
+  if (!resultsDiv) return;
+  resultsDiv.innerHTML = filtered.slice(0, 30).map(food => `
+    <div class="food-search-item" onclick="addFoodToDietMeal('${food.id.replace(/'/g, "\\'")}')">
+      <div>
+        <div class="food-search-name">${escHtml(food.name)}</div>
+        <div class="food-search-serving">${escHtml(food.serving || '1 serving')}</div>
+      </div>
+      <div class="food-search-calories">${food.calories} kcal</div>
+    </div>
+  `).join('');
+}
+
+function updateDietFoodQuantity(mealKey, foodIndex, newQty) {
+  const plan = DB.get('weeklyDietPlan', null);
+  const day = plan?.[state.editingDietDayIndex];
+  if (!day?.meals?.[mealKey]) return;
+  const qty = Math.max(0.1, parseFloat(newQty) || 0.1);
+  const qtyIdx = foodIndex * 2 + 1;
+  day.meals[mealKey].foods[qtyIdx] = Math.round(qty * 10) / 10;
+  recalculateDietMeal(day.meals[mealKey]);
+  DB.set('weeklyDietPlan', plan);
+  renderDietDayEditModal();
+}
+
+function removeDietFoodFromMeal(mealKey, foodIndex) {
+  const plan = DB.get('weeklyDietPlan', null);
+  const day = plan?.[state.editingDietDayIndex];
+  if (!day?.meals?.[mealKey]) return;
+  day.meals[mealKey].foods.splice(foodIndex * 2, 2);
+  recalculateDietMeal(day.meals[mealKey]);
+  DB.set('weeklyDietPlan', plan);
+  renderDietDayEditModal();
+}
+
+function addFoodToDietMeal(foodId) {
+  const plan = DB.get('weeklyDietPlan', null);
+  const day = plan?.[state.editingDietDayIndex];
+  if (!day) return;
+  const mealKey = document.getElementById('diet-add-meal-select')?.value || 'breakfast';
+  if (!day.meals[mealKey]) {
+    day.meals[mealKey] = { label: '', foods: [], macros: { calories: 0, protein: 0, carbs: 0, fats: 0 } };
+  }
+  const dbFood = getAllFoods().find(f => f.id === foodId);
+  if (!dbFood) return;
+  day.meals[mealKey].foods.push(foodId, 1);
+  recalculateDietMeal(day.meals[mealKey]);
+  DB.set('weeklyDietPlan', plan);
+  renderDietDayEditModal();
+  toast(`Added ${dbFood.name}`);
+}
+
+function regenerateEditingDietDay() {
+  const dayIndex = state.editingDietDayIndex;
+  const plan = DB.get('weeklyDietPlan', null);
+  if (dayIndex == null || !plan || !plan[dayIndex]) return;
+
+  const profile = DB.get('calculatorProfile', null);
+  const goals = DB.get('calorieGoals', { calories: 2000, protein: 150, carbs: 200, fats: 55 });
+  if (!profile) { toast('Profile missing'); return; }
+
+  const targetCal = goals.calories || 2000;
+  const targetP = goals.protein || 150;
+  const targetC = goals.carbs || 200;
+  const targetF = goals.fats || 55;
+  const variation = 0.95 + (Math.random() * 0.1);
+  const dayCal = Math.round(targetCal * variation);
+  const dayP = Math.round(targetP * variation);
+  const dayC = Math.round(targetC * variation);
+  const dayF = Math.round(targetF * variation);
+
+  plan[dayIndex].meals = generateDailyDietPlan(dayCal, dayP, dayC, dayF);
+  plan[dayIndex].target = { calories: dayCal, protein: dayP, carbs: dayC, fats: dayF };
+  DB.set('weeklyDietPlan', plan);
+  renderDietDayEditModal();
+  toast(`🔄 Regenerated ${plan[dayIndex].day}`);
+}
+
+function saveDietDayEdit() {
+  const plan = DB.get('weeklyDietPlan', null);
+  if (state.editingDietDayIndex == null || !plan) return;
+  const dayName = plan[state.editingDietDayIndex].day;
+  DB.set('weeklyDietPlan', plan);
+  renderDietPage(plan);
+  closeModal('diet-day-modal');
+  state.editingDietDayIndex = null;
+  state.dietDaySnapshot = null;
+  toast(`✅ Saved ${dayName}`);
+  if (getAuthUser()) setTimeout(() => syncUserDataToCloud(), 300);
+}
+
+function cancelDietDayEdit() {
+  if (state.dietDaySnapshot != null && state.editingDietDayIndex != null) {
+    const plan = DB.get('weeklyDietPlan', null);
+    if (plan) {
+      plan[state.editingDietDayIndex] = JSON.parse(state.dietDaySnapshot);
+      DB.set('weeklyDietPlan', plan);
+      renderDietPage(plan);
+    }
+  }
+  closeModal('diet-day-modal');
+  state.editingDietDayIndex = null;
+  state.dietDaySnapshot = null;
+}
+
 // ─── State ────────────────────────────────────────────────
 let state = {
   currentPage: 'home',
@@ -607,6 +874,8 @@ let state = {
   chart: null,
   editingScheduleDay: null,
   editingScheduleWorkoutIndex: null,
+  editingDietDayIndex: null,
+  dietDaySnapshot: null,
   scheduledSession: null,
   scheduledCurrentIndex: null,
   selectedFoodId: null,
@@ -714,140 +983,6 @@ function highlightMatch(text, query) {
          text.slice(idx + query.length);
 }
 
-// Updated filter – now takes an optional query param
-function filterExercises(query) {
-  // If query not provided, read from input
-  if (query === undefined || query === null) {
-    const input = document.getElementById('exercise-search');
-    query = input ? input.value.toLowerCase().trim() : '';
-  }
-
-const EXERCISES_PER_PAGE = 30;
-let currentExercisePage = 1;
-let allFilteredExercises = [];
-
-function loadMoreExercises() {
-  currentExercisePage++;
-  renderExercisePage();
-}
-
-function renderExercisePage() {
-  const start = 0;
-  const end = currentExercisePage * EXERCISES_PER_PAGE;
-  const visible = allFilteredExercises.slice(start, end);
-  const total = allFilteredExercises.length;
-  const hasMore = end < total;
-
-  const el = document.getElementById('exercise-list');
-  if (!el) return;
-
-  const groups = {};
-  visible.forEach(e => {
-    if (!groups[e.muscle]) groups[e.muscle] = [];
-    groups[e.muscle].push(e);
-  });
-
-  const { prs } = getData();
-  let html = Object.entries(groups).map(([muscle, exs]) => `
-    <div class="exercise-group">
-      <div class="exercise-group-title">${MUSCLE_EMOJIS[muscle] || ''} ${muscle}</div>
-      ${exs.map(e => `
-        <div class="exercise-card">
-          <div class="exercise-info" style="flex:1">
-            <div class="exercise-name">${escHtml(e.name)}</div>
-            <div class="exercise-meta">${e.isCardio ? 'Cardio' : `${e.sets} sets × ${e.reps} reps · ${e.rest}s rest`}</div>
-            ${prs[e.id] ? `<div class="exercise-pr">PR: ${prs[e.id].weight}kg</div>` : ''}
-          </div>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); addToWorkoutQueue('${e.id}', '${escHtml(e.name)}')" style="padding:6px 12px">+ Queue</button>
-            <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); startSessionForExercise('${e.id}')" style="padding:6px 12px">▶ Start</button>
-          </div>
-        </div>`).join('')}
-    </div>`).join('');
-
-  if (hasMore) {
-    html += `<div style="text-align:center;padding:12px;">
-      <button class="btn btn-sm btn-ghost" onclick="loadMoreExercises()">Load 30 more (${total - end} remaining)</button>
-    </div>`;
-  }
-
-  el.innerHTML = html;
-}
-
-// Modify filterExercises to use pagination
-const filterExercises = debounce(function(query) {
-  if (query === undefined || query === null) {
-    const input = document.getElementById('exercise-search');
-    query = input ? input.value.toLowerCase().trim() : '';
-  }
-
-  const allEx = getAllExercises();
-  let exercises = allEx;
-
-  if (state.muscleFilter !== 'All') {
-    exercises = exercises.filter(e => e.muscle === state.muscleFilter);
-  }
-
-  if (query) {
-    exercises = exercises.filter(e =>
-      e.name.toLowerCase().includes(query) ||
-      (e.muscle && e.muscle.toLowerCase().includes(query))
-    );
-  }
-
-  allFilteredExercises = exercises;
-  currentExercisePage = 1;
-  renderExercisePage();
-}, 200);
-  
-  const allEx = getAllExercises();
-  let exercises = allEx;
-
-  if (state.muscleFilter !== 'All') {
-    exercises = exercises.filter(e => e.muscle === state.muscleFilter);
-  }
-
-
-  if (query) {
-    exercises = exercises.filter(e =>
-      e.name.toLowerCase().includes(query) ||
-      (e.muscle && e.muscle.toLowerCase().includes(query))
-    );
-  }
-
-  // Group and render as before
-  const groups = {};
-  exercises.forEach(e => {
-    if (!groups[e.muscle]) groups[e.muscle] = [];
-    groups[e.muscle].push(e);
-  });
-
-  const el = document.getElementById('exercise-list');
-  if (!el) return;
-
-  if (exercises.length === 0) {
-    el.innerHTML = `<div class="empty-state"><span class="empty-icon">🔍</span><p>No exercises found for "<strong>${query}</strong>"</p></div>`;
-    return;
-  }
-
-  const { prs } = getData();
-  el.innerHTML = Object.entries(groups).map(([muscle, exs]) => `
-    <div class="exercise-group">
-      <div class="exercise-group-title">${MUSCLE_EMOJIS[muscle] || ''} ${muscle}</div>
-      ${exs.map(e => `
-        <div class="exercise-card">
-          <div class="exercise-info" style="flex:1">
-            <div class="exercise-name">${escHtml(e.name)}</div>
-            <div class="exercise-meta">${e.isCardio ? 'Cardio' : `${e.sets} sets × ${e.reps} reps · ${e.rest}s rest`}</div>
-            ${prs[e.id] ? `<div class="exercise-pr">PR: ${prs[e.id].weight}kg</div>` : ''}
-          </div>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); addToWorkoutQueue('${e.id}', '${escHtml(e.name)}')" style="padding:6px 12px">+ Queue</button>
-            <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); startSessionForExercise('${e.id}')" style="padding:6px 12px">▶ Start</button>
-          </div>
-        </div>`).join('')}
-    </div>`).join('');
-}
 
 // ─── Keyboard navigation for autocomplete ───
 document.addEventListener('DOMContentLoaded', function() {
@@ -2371,8 +2506,18 @@ function setMuscleFilter(m) {
   state.muscleFilter = m;
   document.getElementById('exercise-search').value = ''; // clears search
   document.getElementById('autocomplete-list').style.display = 'none';
+  expandedExerciseGroups.clear(); // fresh view: collapse all groups back to the first 4
   renderMuscleChips();
   filterExercises('');
+}
+
+// ─── Per-muscle-group pagination (performance: avoid rendering 50+ cards at once on phones) ───
+const EXERCISE_GROUP_PREVIEW_COUNT = 4;
+let expandedExerciseGroups = new Set();
+
+function toggleExerciseGroupExpand(muscle) {
+  expandedExerciseGroups.add(muscle);
+  filterExercises();
 }
 
 function filterExercises() {
@@ -2389,10 +2534,16 @@ function filterExercises() {
   if (!el) return;
   if (exercises.length === 0) { el.innerHTML = '<p class="muted-text">No exercises found.</p>'; return; }
 
-  el.innerHTML = Object.entries(groups).map(([muscle, exs]) => `
+  el.innerHTML = Object.entries(groups).map(([muscle, exs]) => {
+    const isExpanded = expandedExerciseGroups.has(muscle);
+    const visible = isExpanded ? exs : exs.slice(0, EXERCISE_GROUP_PREVIEW_COUNT);
+    const remaining = exs.length - visible.length;
+    const muscleKey = muscle.replace(/'/g, "\\'");
+
+    return `
     <div class="exercise-group">
       <div class="exercise-group-title">${MUSCLE_EMOJIS[muscle] || ''} ${muscle}</div>
-      ${exs.map(e => `
+      ${visible.map(e => `
         <div class="exercise-card">
           <div class="exercise-info" style="flex:1">
             <div class="exercise-name">${escHtml(e.name)}</div>
@@ -2400,11 +2551,15 @@ function filterExercises() {
             ${prs[e.id] ? `<div class="exercise-pr">PR: ${prs[e.id].weight}kg</div>` : ''}
           </div>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); addToWorkoutQueue('${e.id}', '${escHtml(e.name)}')" style="padding:6px 12px">+ Queue</button>
-            <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); startSessionForExercise('${e.id}')" style="padding:6px 12px">▶ Start</button>
+            <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); addToWorkoutQueue('${e.id}', '${escHtml(e.name)}')" style="padding:6px 12px">+ add</button>
           </div>
         </div>`).join('')}
-    </div>`).join('');
+      ${remaining > 0 ? `
+        <button class="btn btn-sm btn-ghost load-more-exercises-btn" onclick="toggleExerciseGroupExpand('${muscleKey}')">
+          ⬇ Load ${remaining} more ${escHtml(muscle)} exercise${remaining !== 1 ? 's' : ''}
+        </button>` : ''}
+    </div>`;
+  }).join('');
 }
 
 function renderCustomWorkouts() {

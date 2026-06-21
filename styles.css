@@ -305,6 +305,19 @@ textarea.form-input { resize: none; }
 .exercise-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
 .exercise-pr { font-size: 12px; color: var(--accent); font-weight: 700; margin-top: 2px; }
 
+.load-more-exercises-btn {
+  width: 100%;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--accent);
+  background: rgba(0,229,160,0.06);
+  border: 1px dashed rgba(0,229,160,0.25);
+}
+.load-more-exercises-btn:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+
 /* ── Session Modal ── */
 .set-row {
   display: grid; grid-template-columns: 36px 1fr 1fr auto;
@@ -4148,6 +4161,113 @@ body.bg-custom::before {
   flex: 1;
   font-size: 12px;
   padding: 6px 10px;
+}
+
+.diet-day-totals {
+  background: var(--bg3);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.diet-day-totals-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.diet-day-totals-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text3);
+}
+
+.diet-day-totals-values {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.diet-meal-section {
+  background: var(--bg3);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 12px;
+  border-left: 3px solid var(--accent);
+}
+
+.diet-meal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.diet-meal-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.diet-meal-macros {
+  font-size: 11px;
+  color: var(--text2);
+}
+
+.diet-food-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.diet-food-row:last-child {
+  border-bottom: none;
+}
+
+.diet-food-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.diet-food-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.diet-food-serving {
+  display: block;
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.diet-qty-input {
+  width: 64px !important;
+  padding: 6px 8px !important;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.diet-empty-meal {
+  font-size: 12px;
+  text-align: center;
+  padding: 8px 0;
+  margin: 0;
+}
+
+#diet-food-search-results {
+  max-height: 180px;
+  overflow-y: auto;
 }
 
 /* ─── Onboarding Tour ─── */
